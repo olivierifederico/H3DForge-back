@@ -1,5 +1,8 @@
 import os
 import boto3
+from ..utils import load_env
+
+load_env()
 
 class S3Config:
     def __init__(self):
@@ -13,4 +16,5 @@ class S3Config:
                             aws_secret_access_key=self.__password,
                             endpoint_url=self.__host
                             )
+
     
