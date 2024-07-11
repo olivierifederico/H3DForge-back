@@ -1,24 +1,38 @@
 from .config import S3Config
-import os
+from botocore.exceptions import ClientError, NoCredentialsError
 
 class S3Service(S3Config):
     def __init__(self):
         super().__init__()
         self.__client = self.create_client()
-        # print(self.__user_name, self.__password)
 
     def create_bucket(self, bucket_name: str):
-        response = self.__client.create_bucket(Bucket=bucket_name)
-        return response
+        try:
+            response = self.__client.create_bucket(Bucket=bucket_name)
+        except ClientError as e:
+            raise ValueError(f"Client error: {e.response['Error']['Message']}") from e
+        except NoCredentialsError as e:
+            raise ValueError("Credentials not available") from e
 
     def delete_bucket(self, bucket_name: str):
-        self.__client.delete_bucket(Bucket=bucket_name)
+        try:
+            self.__client.delete_bucket(Bucket=bucket_name)
+        except ClientError as e:
+            raise ValueError(f"Client error: {e.response['Error']['Message']}") from e
+        except NoCredentialsError as e:
+            raise ValueError("Credentials not available") from e
 
     def list_buckets(self, only_names: bool = True):
-        response = self.__client.list_buckets()
-        if only_names:
-            return [i['Name'] for i in response['Buckets']]
-        return response['Buckets']
+        try:
+            response = self.__client.list_buckets()
+            if only_names:
+                return [i['Name'] for i in response['Buckets']]
+            else:
+                return response['Buckets']
+        except ClientError as e:
+            raise ValueError(f"Client error: {e.response['Error']['Message']}") from e
+        except NoCredentialsError as e:
+            raise ValueError("Credentials not available") from e
     
     def upload_file(self, bucket_name: str ,file_name: str, path: str = None, rename: str = None):
         

@@ -3,3 +3,4 @@ venv
 src/__pycache__/
 src/modules/s3/__pycache__/
 src/modules/__pycache__
+src/routers/__pycache__/
