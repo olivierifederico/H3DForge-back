@@ -59,9 +59,11 @@ class S3Service(S3Config):
         return final_path
     
     def save_file_s3(self, bucket_name: str ,file_name: str, path: str = None, rename: str = None):
-        buckets = self.list_buckets()
-        if bucket_name not in buckets:
-            self.create_bucket(bucket_name)
-        self.upload_file(bucket_name, file_name, path, rename)
-        
+        try:
+            buckets = self.list_buckets()
+            if bucket_name not in buckets:
+                self.create_bucket(bucket_name)
+            self.upload_file(bucket_name, file_name, path, rename)
+        except ValueError as e:
+            raise ValueError(f"An error occurred while saving the file: {e}") from e
     

@@ -4,3 +4,6 @@ src/__pycache__/
 src/modules/s3/__pycache__/
 src/modules/__pycache__
 src/routers/__pycache__/
+src/modules/mongodb/__pycache__/
+src/modules/data_providers/mega/__pycache__/
+src/routers/data_providers/__pycache__/
