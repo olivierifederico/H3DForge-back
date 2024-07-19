@@ -8,7 +8,10 @@ class S3Config:
     def __init__(self):
         self.__user_name = os.getenv('MINIO_ROOT_USER')
         self.__password = os.getenv('MINIO_ROOT_PASSWORD')
-        self.__host = os.getenv('MINIO_HOST')
+        if os.getenv('docker') == 'true':
+            self.__host = os.getenv('MINIO_HOST')
+        else:
+            self.__host = os.getenv('MINIO_LOCALHOST')
 
     def create_client(self):
         return boto3.client('s3',
