@@ -33,12 +33,13 @@ class S3Service(S3Config):
             raise ValueError(f"Client error: {e.response['Error']['Message']}") from e
         except NoCredentialsError as e:
             raise ValueError("Credentials not available") from e
-    
-    def upload_file(self, bucket_name: str ,file_name: str, path: str = None, rename: str = None):
         
-        with open(file_name, 'rb') as f:
-            final_path = self._generate_final_path(file_name, path, rename)
-            self.__client.upload_fileobj(f,bucket_name, final_path)
+    def check_bucket(self, bucket_name: str):
+        return bucket_name in self.list_buckets()
+    
+    def upload_file(self, bucket_name: str ,file_path: str, s3_path: str):
+        with open(file_path, 'rb') as f:
+            self.__client.upload_fileobj(f,bucket_name, s3_path)
         return True
     
     def remove_file(self, bucket_name: str, file_name: str, path: str = None):
@@ -48,9 +49,16 @@ class S3Service(S3Config):
             return True
         except RuntimeError as e:
             print('ole')
+
+    def check_file(self, bucket_name: str, file_name: str, path: str = None):
+        final_path = self._generate_final_path(file_name, path)
+        try:
+            self.__client.head_object(Bucket=bucket_name, Key=final_path)
+            return True
+        except ClientError as e:
+            return False
     
     def _generate_final_path(self, file_name: str, path: str = None, rename: str = None) -> str:
-        """Generates the final path for the file to be uploaded."""
         if path:
             path = path[:-1] if path[-1] == '/' else path
             final_path = f"{path}/{rename or file_name}"
@@ -58,12 +66,11 @@ class S3Service(S3Config):
             final_path = rename or file_name
         return final_path
     
-    def save_file_s3(self, bucket_name: str ,file_name: str, path: str = None, rename: str = None):
+    def save_file_s3(self, bucket_name: str ,file_path: str, s3_path: str = None, rename: str = None):
         try:
-            buckets = self.list_buckets()
-            if bucket_name not in buckets:
+            if not self.check_bucket(bucket_name):
                 self.create_bucket(bucket_name)
-            self.upload_file(bucket_name, file_name, path, rename)
+            self.upload_file(bucket_name, file_path, s3_path)
         except ValueError as e:
             raise ValueError(f"An error occurred while saving the file: {e}") from e
     

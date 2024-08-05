@@ -1,0 +1,114 @@
+use('h3dforge_dev')
+// create schema for dnd miniatures collection
+db.createCollection("dnd_miniatures",{
+    validator:{
+        $jsonSchema:{
+            bsonType:"object",
+            required:['sku', 'filename', 's3_path', 'created_at'],
+        },
+        'sku': {
+            bsonType: "string",
+            description: "must be a string and is required"
+        },
+        'filename': {
+            bsonType: "string",
+            description: "must be a string and is required"
+        },
+        's3_path': {
+            bsonType: "string",
+            description: "must be a string and is required"
+        },
+        'filename_variants': {
+            bsonType: "array",
+            description: "must be an array"
+        },
+        'model_details': {
+            bsonType: "object",
+            required: ['name'],
+            'name': {
+                bsonType: "string",
+                description: "must be a string and is required"
+            },
+            'scale': {
+                bsonType: "string",
+                description: "must be a string"
+            },
+            'size': {
+                bsonType: "string",
+                description: "must be a string"
+            },
+            'gender': {
+                bsonType: "string",
+                description: 'must be a string'
+            },
+            'race': {
+                bsonType: "string",
+                description: 'must be a string'
+            },
+            'class': {
+                bsonType: "string",
+                description: 'must be a string'
+            },
+            'weapons': {
+                bsonType: "array",
+                description: 'must be an array'
+            },
+            'armors': {
+                bsonType: "array",
+                description: 'must be an array'
+            },
+            'accessories': {
+                bsonType: "array",
+                description: 'must be an array'
+            },
+            'others': {
+                bsonType: "array",
+                description: 'must be an array'
+            },
+            'notes': {
+                bsonType: "string",
+                description: 'must be a string'
+            }
+        },
+        'file_info': {
+            bsonType: "object",
+            required: ['source_id'],
+            'supported': {
+                bsonType: "bool",
+                description: "must be a boolean"
+            },
+            'ready_for_print': {
+                bsonType: "bool",
+                description: "must be a boolean"
+            },
+            'complexity': {
+                bsonType: "string",
+                description: "must be a string"
+            },
+            'notes': {
+                bsonType: "string",
+                description: "must be a string"
+            },
+            'source_id': {
+                bsonType: "string",
+                description: "source sku must be a string and is required"
+            },
+            'designer_id': {
+                bsonType: "string",
+                description: "designer sku must be a string"
+            },
+            'model_group_id': {
+                bsonType: "string",
+                description: "model group sku must be a string"
+            },
+            'license_id': {
+                bsonType: 'string',
+                description: 'license sku must be a string'
+            },
+        },
+        'created_at': {
+            bsonType: "string",
+            description: "must be a date and is required"
+        }
+    }
+})

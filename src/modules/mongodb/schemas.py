@@ -44,3 +44,16 @@ class RawMiniatureSchema(BaseModel):
             }
         }
 
+class SourceSchema(BaseModel):
+    name: str = Field(..., title='Source name', min_length=3, max_length=255)
+    origin: str = Field(..., title='Prefix SKU', min_length=3, max_length=15)
+    path_to_sub_folders: Optional[list] = Field([], title='Paths', min_length=0)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "voidx",
+                "origin": "void",
+                "path_to_sub_folders": []
+            }
+        }

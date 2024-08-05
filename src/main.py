@@ -13,14 +13,14 @@ app.description = 'dataload'
 app.version = '0.1.0'
 app.docs_url = '/docs'
 
-app.include_router(s3.router, prefix='/s3', tags=['S3'])
-app.include_router(mongodb.router, prefix='/mongodb', tags=['MongoDB'])
+# app.include_router(s3.router, prefix='/s3', tags=['S3'])
+# app.include_router(mongodb.router, prefix='/mongodb', tags=['MongoDB'])
 app.include_router(mega.router, prefix='/mega', tags=['Mega'])
+# app.include_router(mega_raw.router, prefix='/core', tags=['Core'])
+
 
 @app.get('/', tags=['Root'])
 def read_root():
     return {'message': 'Welcome to Hefesto'}
 
-@app.get('/creds', tags=['Root'])
-def get_creds():
-    return {'message': os.getenv('MINIO_ROOT_USER')}
+

@@ -1,0 +1,6 @@
+docker build -t h3dforge_fastapi .
+docker run -d --name h3dforge_api --network spidernest --ip 172.18.0.50 -p 80:80 h3dforge_fastapi
+
+comando para crear volumes
+docker volume create --driver local --opt type=none --opt device=F:/MEGAcmd/data --opt o=bind megacmd_data
+docker run -d --name megacmd --network spidernest --restart always -v /etc/machine-id:/etc/machine-id:ro -v /opt/MEGA/config:/root/.megaCmd -v megacmd_data:/root/MEGA ruslanys/megacmd

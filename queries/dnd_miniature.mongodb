@@ -1,0 +1,3 @@
+use('h3dforge_prod')
+
+db.getCollectionInfos({name: 'dnd_miniatures'})

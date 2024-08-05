@@ -1,0 +1,74 @@
+use('h3dforge_dev')
+
+db['files'].updateOne({
+    'name': 'Archvillain Relics - Vampire Elder Skull - Presupported_2.7z/Archvillain Relics - Vampire Elder Skull - Presupported_2.7z.001'
+},
+{
+    $set:{url:"GM - Miniatures and Terrain/Archvillain Games/Archvillain Relics - Vampire Elder Skull - Presupported_2.7z/Archvillain Relics - Vampire Elder Skull - Presupported_2.7z.001"}
+})
+
+
+
+    // manual upload
+    // [
+    //     {
+    //       "sku": "mega-00-0034-0024-000000"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0024-000001"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0024-000003"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0024-000004"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0024-000005"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0024-000006"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0030-000486"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0060-000000"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0060-000002"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0082-000000"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0082-000001"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0178-000000"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0178-000001"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0178-000003"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0178-000004"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0213-000000"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0213-000002"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0213-000004"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0213-000006"
+    //     },
+    //     {
+    //       "sku": "mega-00-0034-0213-000008"
+    //     }
+    //   ]
