@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H3DForge Back</title>
+    <link rel="stylesheet" type="text/css" href="static/styles/styles.css">
+</head>
+
+<body>
+    <header>
+        <h1>H3DForge Back</h1>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/raw_to_db">Raw to DB</a></li>
+                <li><a href="/test">Download</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <div id="mega_info" class="source_info">
+            <ul>
+            <h5>Mega Source Info</h2>
+                <li>Files in DB: {{data['mega_raw_files']}}</li>
+                <li>Files in S3: {{data['mega_raw_files_s3']}}</li>
+                <li>Files to load S3: {{data['mega_raw_files'] - data['mega_raw_files_s3']}}</li>
+            </ul>
+        </div>
+    </main>
+</body>
+
+</html>

@@ -1,0 +1,39 @@
+use('h3dforge_dev')
+
+db['sub_categories'].insertMany([
+    {
+        "name": "Miniatures",
+        "category_id": "dnd",
+        "id": "min",
+        "created_at": new Date(),
+        "updated_at": null,
+    },
+    {
+        "name": "Monsters",
+        "category_id": "dnd",
+        "id": "mon",
+        "created_at": new Date(),
+        "updated_at": null,
+    },
+    {
+        "name": "Terrain",
+        "category_id": "dnd",
+        "id": "ter",
+        "created_at": new Date(),
+        "updated_at": null,
+    },
+    {
+        "name": "Accessories",
+        "category_id": "dnd",
+        "id": "acc",
+        "created_at": new Date(),
+        "updated_at": null,
+    },
+    {
+        "name": "Other",
+        "category_id": "dnd",
+        "id": "oth",
+        "created_at": new Date(),
+        "updated_at": null,
+    }
+])

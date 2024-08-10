@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H3DForge Back</title>
+    <link rel="stylesheet" type="text/css" href="static/styles/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/STLLoader.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js" defer></script>
+    <script type="module" src="static/scripts/raw_to_db.js" defer></script>
+</head>
+
+<body>
+    <div id="container">
+        <header>
+            <h1>H3DForge Back</h1>
+            <nav>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/raw_to_db">Raw to DB</a></li>
+                    <li><a href="/test">Download</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main id="raw_to_db-container">
+            <div id="file_info-div" class="info_box">
+                <div>
+                    <h5>File info</h5>
+                    <ul id="file_info-ul">
+                    </ul>
+                </div>
+                <div class="btn-div">
+                    <ul>
+                        <li><button id="get-btn">Get</button></li>
+                        <li><button id="load-btn">Load</button></li>
+                        <li><button id="skip-btn">Skip</button></li>
+                        <li><button id="fix-btn">Fix</button></li>
+                    </ul>
+                </div>
+            </div>
+            <div id="file_list-div" class="info_box">
+                <div>
+                    <h5>Files</h5>
+                    <form id="file_form"></form>
+                    <ul id="file_list-ul">
+                    </ul>
+                </div>
+                <div class="btn-div">
+                    <ul>
+                        <li><button id="load_model-btn">Load</button></li>
+                        <li><button id="confirm_model-btn">Confirm</button></li>
+                    </ul>
+                </div>
+            </div>
+            <div id="model_form-div">
+                <div class="info_box" id="category-div">
+                    <h5>Category info</h5>
+                    <div id="category-container">
+                        <div class="selector-div">
+                            <label for="category-select">Category:</label>
+                            <select id="category-select" name="category">
+                                <option value="wh">WarHammer</option>
+                                <option value="sc">StarCraft</option>
+                            </select>
+                            <button class="xmini-btn">Add</button>
+                        </div>
+                        <div class="selector-div">
+                            <label for="sub_category-select">Sub Category:</label>
+                            <select id="sub_category-select" name="sub_category">
+                            </select>
+                            <button class="xmini-btn">Add</button>
+                        </div>
+                        <div>
+                            <button id="select_category-btn" class="mini-btn">Load Form</button>
+                            <button class="mini-btn">↺</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="info_box" id="form-div">
+                    <h5>Model info</h5>
+                </div>
+                <div class="info_box" id="final-div">
+                    <h5>Final info</h5>
+                    <ul id="status-ul">
+                        <li id="load_file_status"><strong>Load File Status: </strong><p>Estado</p></li>
+                        <li id=""><strong>Field Status: </strong><p>Estado</p></li>
+                        <li id=""><strong>Field Status: </strong><p>Estado</p></li>
+                        <li id=""><strong>Field Status: </strong><p>Estado</p></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info_box" id="model_viewer-div">
+            </div>
+
+        </main>
+    </div>
+</body>
+
+
+</html>

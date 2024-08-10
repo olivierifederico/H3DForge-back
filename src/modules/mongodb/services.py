@@ -1,6 +1,8 @@
+from bson import ObjectId
 from .config import MongoDBConfig
 import os
 from datetime import datetime, timezone
+import json
 
 now = datetime.now(timezone.utc)
 
@@ -41,10 +43,46 @@ class MongoDBService(MongoDBConfig):
             raise ValueError(f"An error occurred while getting the documents: {e}")
         return documents
     
-    async def update_document(self, db_name: str, collection_name: str, doc_field:str, doc_value:any, document: dict):
+    async def get_document_by_id(self, db_name: str, collection_name: str, document_id: str):
         try:
             collection = self.__client[f'{db_name}_{os.getenv('ENV')}'][collection_name]
-            await collection.update_one({doc_field: doc_value}, {'$set': document})
+            document = await collection.find_one({'_id': ObjectId(document_id)})
+            if document is not None:
+                document['_id'] = str(document['_id'])
+            print(document)
+
+        except Exception as e:
+            raise ValueError(f"An error occurred while getting the document: {e}")
+        return document
+    
+    async def get_first_document(self, db_name: str, collection_name: str, query: dict = None):
+        try:
+            collection = self.__client[f'{db_name}_{os.getenv('ENV')}'][collection_name]
+            cursor = collection.find({}) if query is None else collection.find(query)
+            documents = await cursor.to_list(length=None)
+            for doc in documents:
+                doc['_id'] = str(doc['_id'])
+        except Exception as e:
+            raise ValueError(f"An error occurred while getting the documents: {e}")
+        return documents[0]
+    
+    async def count_documents(self, db_name: str, collection_name: str, query: dict = None):
+        try:
+            collection = self.__client[f'{db_name}_{os.getenv('ENV')}'][collection_name]
+            count = await collection.count_documents({}) if query is None else await collection.count_documents(query)
+        except Exception as e:
+            raise ValueError(f"An error occurred while counting the documents: {e}")
+        return count
+    
+    async def update_document(self, db_name: str, collection_name: str, doc_field:str, doc_value:any, document: dict):
+        try:
+            if doc_field == '_id':
+                doc_value = ObjectId(doc_value)
+            collection = self.__client[f'{db_name}_{os.getenv('ENV')}'][collection_name]
+            response = await collection.update_one({doc_field: doc_value}, {'$set': document})
+            response = response.raw_result
+            response
+            return True
         except Exception as e:
             raise ValueError(f"An error occurred while updating the document: {e}")
         
@@ -157,4 +195,25 @@ class MongoDBService(MongoDBConfig):
         for doc in documents:
             doc['_id'] = str(doc['_id'])
         return documents
+    
+    async def get_categories(self, db_name:str):
+        collection = 'categories'
+        cursor = self.__client[f'{db_name}_{os.getenv('ENV')}'][collection].find({})
+        documents = await cursor.to_list(length=None)
+        for doc in documents:
+            doc['_id'] = str(doc['_id'])
+        return documents
+    
+    async def get_sub_categories(self, db_name:str):
+        categories = await self.get_categories(db_name)
+        category_ids = []
+        for category in categories:
+            category_ids.append(category['id'])
+        collection = 'sub_categories'
+        cursor = self.__client[f'{db_name}_{os.getenv('ENV')}'][collection].find({'category_id': {'$in': category_ids}})
+        sub_categories = await cursor.to_list(length=None)
+        for sub in sub_categories:
+            sub['_id'] = str(sub['_id'])
+        
+        return categories, sub_categories
     

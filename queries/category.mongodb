@@ -1,0 +1,8 @@
+use('h3dforge_dev')
+
+db['categories'].insertOne({
+  "name": "Dungeons & Dragons",
+  'id': 'dnd',
+  "created_at": new Date(),
+  "updated_at": null,
+})

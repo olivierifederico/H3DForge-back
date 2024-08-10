@@ -1,0 +1,274 @@
+/* General styles */
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #121212;
+    color: #00FF41;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+#container {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    /* grid-gap: 20px; */
+    height: 100vh;
+    width: 100vw;
+}
+
+header {
+    background-color: #1E1E1E;
+    padding: 18px;
+    text-align: center;
+    border-bottom: 1px solid #00FF41;
+    /* margin-bottom: 20px; Añadir margen en la parte inferior del header */
+}
+
+header h1 {
+    margin-bottom: 10;
+    font-size: 2em;
+    color: #00FF41;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 20px;
+}
+
+nav ul li a {
+    color: #00FF41;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+nav ul li a:hover {
+    text-decoration: underline;
+}
+
+/* Main content */
+main {
+    padding: 20px;
+    text-align: center;
+}
+
+#raw_to_db-container {
+    display: grid;
+    grid-template-columns: 0.2fr 1fr 0.5fr;
+    grid-template-rows: 0.3fr auto;
+    grid-gap: 20px;
+    grid-template-areas: 
+        "files_info file_data model_viewer"
+        "file_list file_data model_viewer";
+}
+
+#file_info-div {
+    grid-area: files_info;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#file_list-div {
+    grid-area: file_list;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#file_list-ul {
+    list-style-type: none;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 10px;
+    overflow-y: auto;
+}
+
+#file_list-ul li label {
+    display: flex;
+}
+
+#file_list-ul li label input{
+    margin-top: 0px;
+}
+
+#model_form-div {
+    grid-area: file_data;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.1fr auto auto;
+    row-gap: 20px;
+    grid-template-areas:
+        "category"
+        "model_form"
+        "final_info";
+}
+
+#category-div {
+    grid-area: category;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#category-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    vertical-align: middle;
+}
+
+.selector-div {
+    display: flex;
+    align-items: center;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.selector-div select {
+    border-radius: 5px;
+    margin-left: 5px;
+}
+
+
+#model_form-header-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#model_viewer-div {
+    grid-area: model_viewer;
+}
+
+#model_viewer-div canvas {
+    border-radius: 5px;
+}
+
+.info_box {
+    background-color: #1E1E1E;
+    border: 1px solid #00FF41;
+    border-radius: 5px;
+    padding: 20px;
+    display: inline-block;
+}
+
+.info_box h5 {
+    margin: 0 0 10px 0; /* Ajustar margen en la parte inferior del h5 */
+    color: #00FF41;
+    font-size: 1.2em;
+}
+
+.info_box ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info_box ul li {
+    margin: 5px 0;
+    color: #00FF41;
+}
+
+.info_box {
+    background-color: #1E1E1E;
+    border: 1px solid #00FF41;
+    padding: 20px;
+    display: inline-block;
+    text-align: left; /* Alinea el texto a la izquierda en la lista */
+}
+
+.info_box h5 {
+    margin: 0 0 10px 0;
+    color: #00FF41;
+    font-size: 1em;
+}
+
+.info_box ul {
+    list-style-type: none;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+}
+
+.info_box ul li {
+    margin: 5px 5px;
+    color: #00FF41;
+    font-size: 12px;
+}
+
+.info_box ul li strong {
+    color: #FFFFFF; /* Color del texto de las etiquetas en blanco */
+}
+
+
+.btn-div ul {
+    display: flex;
+    flex-direction: row;
+    
+    justify-content: right;
+}
+
+button, .button {
+    background-color: #1E1E1E; /* Fondo oscuro */
+    color: #00FF41; /* Texto en color neón */
+    border: 2px solid #00FF41; /* Borde en color neón */
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s, transform 0.3s; /* Transiciones suaves */
+}
+
+.mini-btn {
+    border-radius: 5px;
+    font-size: 0.8em;
+    cursor: pointer;
+    padding: 4px 5px;
+    transition: background-color 0.3s, color 0.3s, transform 0.3s; /* Transiciones suaves */
+}
+
+.xmini-btn {
+    border-radius: 5px;
+    border: 1px solid #00FF41;
+    margin-left: 5px;
+    font-size: 0.5em;
+    cursor: pointer;
+    padding: 2px 5px;
+    transition: background-color 0.3s, color 0.3s, transform 0.3s; /* Transiciones suaves */
+}
+
+/* Estilo para botones cuando el cursor pasa sobre ellos */
+button:hover, .button:hover {
+    background-color: #00FF41; /* Fondo neón */
+    color: #1E1E1E; /* Texto oscuro */
+    transform: scale(1.05); /* Aumenta ligeramente el tamaño */
+}
+
+/* Botón cuando se hace clic (activo) */
+button:active, .button:active {
+    background-color: #00CC33; /* Fondo neón más oscuro */
+    border-color: #00CC33;
+}
+
+/* Botón cuando está deshabilitado */
+button:disabled, .button:disabled {
+    background-color: #555555; /* Fondo gris oscuro */
+    color: #AAAAAA; /* Texto gris claro */
+    border-color: #555555;
+    cursor: not-allowed; /* Cursor no permitido */
+}

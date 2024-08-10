@@ -1,12 +1,6 @@
 use('h3dforge_dev')
 
-db['files'].updateOne({
-    'name': 'Archvillain Relics - Vampire Elder Skull - Presupported_2.7z/Archvillain Relics - Vampire Elder Skull - Presupported_2.7z.001'
-},
-{
-    $set:{url:"GM - Miniatures and Terrain/Archvillain Games/Archvillain Relics - Vampire Elder Skull - Presupported_2.7z/Archvillain Relics - Vampire Elder Skull - Presupported_2.7z.001"}
-})
-
+db['files'].find({'status.s3':true}).count()
 
 
     // manual upload

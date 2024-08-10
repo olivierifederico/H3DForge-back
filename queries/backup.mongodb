@@ -1,0 +1,11 @@
+use('h3dforge_dev')
+
+db.files.aggregate([
+    {$match: {}},
+    {$out: 'h3dforge_prod.files'}
+])
+
+const temp = db['h3dforge_prod.files'].find()
+
+db.getSiblingDB('h3dforge_prod')['files'].insert(temp.toArray())
+

@@ -1,10 +1,33 @@
 from .config import S3Config
 from botocore.exceptions import ClientError, NoCredentialsError
+import os
+import time
 
 class S3Service(S3Config):
     def __init__(self):
         super().__init__()
         self.__client = self.create_client()
+
+    def download_from_path(self, bucket:str, path:str):
+        try:
+            temp_path = os.path.join(os.getcwd(), 'static/temp/files/')
+            filename = path.split('/')[-1]
+            file_path = f"{temp_path}{filename}"
+            if os.path.exists(file_path):
+                print('File already exists')
+                return temp_path
+            else:
+                print('Downloading file')
+                self.__client.download_file(bucket, path, file_path)
+                while not os.path.exists(file_path):
+                    time.sleep(0.2)
+                print('File downloaded')
+                return temp_path
+        
+        except ClientError as e:
+            raise ValueError(f"Client error: {e.response['Error']['Message']}") from e
+        except NoCredentialsError as e:
+            raise ValueError("Credentials not available") from e
 
     def create_bucket(self, bucket_name: str):
         try:

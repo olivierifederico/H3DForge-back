@@ -3,6 +3,8 @@ import os
 import mimetypes
 import re
 from datetime import datetime
+import urllib.parse
+
 now = datetime.now()
 
 # Mimetype
@@ -10,6 +12,13 @@ mimetypes.add_type('application/sla', '.stl')
 mimetypes.add_type('image/webp', '.webp')
 
 valid_ext = ['.stl','.obj','.zip','.rar','.7z','.7z.part','.rar.part','.gzip','.part']
+
+def decode_url_params(url:str):
+    return url.replace('_espacio_', ' ').replace('_coma_', ',').replace('_punto_', '.').replace('_guion_', '-').replace('_barra_', '/')
+
+def get_files_from_path(path:str):
+    return [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+
 
 def get_current_time():
     return now.strftime('%Y-%m-%d %H:%M:%S')
