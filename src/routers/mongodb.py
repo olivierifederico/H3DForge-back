@@ -1,7 +1,8 @@
 from ..modules.mongodb.services import MongoDBService
 from ..modules.mongodb.schemas import CollectionSchema, RawMiniatureSchema
-from fastapi import APIRouter, Path, HTTPException
+from fastapi import APIRouter, Path, HTTPException, Query
 from ..modules import utils
+from bson import ObjectId
 
 mongodb = MongoDBService()
 
@@ -20,12 +21,29 @@ async def get_collections(db_name: str = Path(..., title='Database name')) -> li
 # FIX HARDCODED DB NAME AND COLLECTION NAME
 @router.get('/get_document_by_id/{id}', tags=['MongoDB'], status_code=200)
 async def get_document_by_id(id: str) -> dict:
-    document = await mongodb.get_document_by_id('h3dforge', 'files', id)
+    document = await mongodb.get_document_by_id('h3dforge', 'files', id, ['source_data._id'])
     return document
 
-@router.get('/get_first_document/', tags=['MongoDB'], status_code=200)
-async def get_first_document() -> dict:
-    document = await mongodb.get_first_document('h3dforge', 'files', {'status.s3': True, 'status.db': False, 'extension': '.stl', 'status.fix': {'$ne': True}})
+@router.get('/file_to_prepare/{source_id}/{extension}', tags=['MongoDB'], status_code=200)
+async def get_first_document(source_id:str, extension:str) -> dict:
+    extension = utils.decode_url_params(extension)
+    print(source_id, extension)
+    source_id = ObjectId(source_id)
+    filter_query = {
+        'source_data._id': source_id,
+        'status.s3': True,
+        'status.db': False,
+        'status.fix': {'$ne': True}
+    }
+    if extension != 'no_extension' or extension != 'any_extension':
+        filter_query['extension'] = extension
+
+    document = await mongodb.get_first_document(
+        'h3dforge',
+        'files',
+        filter_query,
+        ['source_data._id']
+    )
     return document
 
 @router.put('/set_fix/{id}/{reason}', tags=['MongoDB'], status_code=200)
@@ -43,10 +61,10 @@ async def create_collection(collection: CollectionSchema) -> dict:
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# @router.delete('/drop_collection/', tags=['MongoDB'], status_code=204)
-# async def drop_collection(collection: CollectionSchema):
-#     await mongodb.drop_collection(collection.name, collection.database)
-#     return {'message': f'Collection {collection.name} dropped from database {collection.database}'}
+@router.get('/get_form/{form_id}', tags=['MongoDB'], status_code=200)
+async def get_form(form_id: str = Path(..., title='Form id')) -> dict:
+    form = await mongodb.get_document_by_field('h3dforge', 'forms', 'id', form_id)
+    return form
 
 # insertar documento en una colección
 @router.post('/insert_document/', tags=['MongoDB'], status_code=201)
@@ -60,9 +78,10 @@ async def insert_document(document: RawMiniatureSchema, collection: CollectionSc
     #     raise HTTPException(status_code=400, detail=str(e))
     
 # obtener documentos de una colección
-@router.post('/get_documents/', tags=['MongoDB'], status_code=200)
-async def get_documents(collection: CollectionSchema) -> list:
-    documents = await mongodb.get_documents(collection.name, collection.database)
+@router.get('/get_documents/', tags=['MongoDB'], status_code=200)
+async def get_documents(database: str = Query(...), name: str = Query(...)) -> list:
+    print(database, name)
+    documents = await mongodb.get_documents(database, name)
     return documents
 
 @router.get('/get_categories_data/', tags=['MongoDB'], status_code=200)

@@ -1,0 +1,141 @@
+use('h3dforge_dev')
+
+db['forms'].insertOne({
+    'name': 'Miniatures',
+    'id': 'dnd-min',
+    'model_fields': [
+        {
+            'name': 'scale',
+            'type': 'list',
+            'options': ['28mm', '32mm', '54mm']
+        },
+        {
+            'name': 'size',
+            'type': 'list',
+            'options': ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']
+        },
+        {
+            'name': 'gender',
+            'type': 'list',
+            'options': ['Male', 'Female', 'None', 'Unknown']
+        },
+        {
+            'name': 'race',
+            'type': 'list',
+            'options': [
+                "Human", "Elf", "Dwarf", "Halfling", "Gnome", "Half-Elf", "Half-Orc",
+                "Tiefling", "Dragonborn", "Aasimar", "Genasi", "Goliath", "Tabaxi",
+                "Triton", "Yuan-Ti Pureblood", "Firbolg", "Kenku", "Lizardfolk",
+                "Goblin", "Hobgoblin", "Kobold", "Orc", "Aarakocra", "Gith", "Tortle",
+                "Loxodon", "Simic Hybrid", "Vedalken", "Leonin", "Satyr", "Centaur",
+                "Minotaur", "Fairy", "Harengon", "Owlin", "Shifter", "Changeling",
+                "Warforged", "Kalashtar"
+            ]
+        },
+        {
+            'name': 'class',
+            'type': 'list',
+            'options': [
+                "Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin",
+                "Ranger", "Rogue", "Sorcerer", "Warlock", "Wizard", "Artificer",
+                "Blood Hunter", "Mystic", "Psion", "Alchemist", "Warlord", "Witch"
+            ]
+        },
+        {
+            'name': 'weapons',
+            'type': 'list',
+            'options': [
+                "Club", "Dagger", "Greatclub", "Handaxe", "Javelin", "Light Hammer",
+                "Mace", "Quarterstaff", "Sickle", "Spear", "Unarmed Strike",
+                "Light Crossbow", "Dart", "Shortbow", "Sling", "Battleaxe", "Flail",
+                "Glaive", "Greataxe", "Greatsword", "Halberd", "Lance", "Longsword",
+                "Maul", "Morningstar", "Pike", "Rapier", "Scimitar", "Shortsword",
+                "Trident", "War Pick", "Warhammer", "Whip", "Blowgun", "Hand Crossbow",
+                "Heavy Crossbow", "Longbow", "Net"
+            ]
+        },
+        {
+            'name': 'armors',
+            'type': 'list',
+            'options': [
+                "Padded", "Leather", "Studded Leather", "Hide", "Chain Shirt",
+                "Scale Mail", "Breastplate", "Half Plate", "Ring Mail", "Chain Mail",
+                "Splint", "Plate", "Shield"
+            ]
+        },
+        {
+            'name': 'accessories',
+            'type': 'list',
+            'options': [
+                "Amulet", "Ring", "Belt", "Boots", "Bracers", "Cloak", "Gloves",
+                "Helm", "Mask", "Necklace", "Periapt", "Robe", "Sash", "Talisman",
+                "Vest", "Cape", "Circlet", "Brooch", "Goggles", "Gauntlets", "Gloves",
+                "Mantle", "Pendant"
+            ]
+        },
+        {
+            'name': 'others',
+            'type': 'list',
+            'options': [
+                "Potion", "Scroll", "Wand", "Rod", "Staff", "Orb", "Crystal",
+                "Book", "Lantern", "Bag of Holding", "Alchemist's Supplies",
+                "Thieves' Tools", "Herbalism Kit", "Healer's Kit", "Musical Instrument",
+                "Holy Symbol", "Arcane Focus", "Druidic Focus", "Component Pouch",
+                "Lockpicks", "Map", "Rope", "Torch", "Caltrops", "Ball Bearings",
+                "Spyglass", "Grappling Hook"
+            ]
+        },
+        {
+            'name': 'add notes',
+            'type': 'button',
+            'function': 'model_add_notes'
+        },
+        {
+            'name': 'add problems',
+            'type': 'button',
+            'function': 'model_add_problems'
+        }
+    ],
+    'print_fields': [
+        {
+            'name': 'supported',
+            'type': 'boolean'
+        },
+        {
+            'name': 'ready_for_print',
+            'type': 'boolean'
+        },
+        {
+            'name': 'base',
+            'type': 'boolean'
+        },
+        {
+            'name': 'complexity',
+            'type': 'list',
+            'options': ['Low', 'Medium', 'High']
+        },
+        {
+            'name': 'quality',
+            'type': 'list',
+            'options': ['Low', 'Medium', 'High']
+        },
+        {
+            'name': 'FDM',
+            'type': 'boolean'
+        },
+        {
+            'name': 'SLA',
+            'type': 'boolean'
+        },
+        {
+            'name': 'add notes',
+            'type': 'button',
+            'function': 'print_add_notes'
+        },
+        {
+            'name': 'add problems',
+            'type': 'button',
+            'function': 'print_add_problems'
+        }
+    ]
+})

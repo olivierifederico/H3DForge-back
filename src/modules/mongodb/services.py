@@ -2,7 +2,7 @@ from bson import ObjectId
 from .config import MongoDBConfig
 import os
 from datetime import datetime, timezone
-import json
+from ...modules import utils
 
 now = datetime.now(timezone.utc)
 
@@ -32,39 +32,41 @@ class MongoDBService(MongoDBConfig):
     async def insert_many_documents(self, documents: list, collection_name: str, db_name: str):
         await self.__client[f'{db_name}_{os.getenv('ENV')}'][collection_name].insert_many(documents)
     
-    async def get_documents(self, db_name: str, collection_name: str, query: dict = None):
+    async def get_documents(self, db_name: str, collection_name: str, query: dict = None, id_fields: list = []):
         try:
             collection = self.__client[f'{db_name}_{os.getenv('ENV')}'][collection_name]
             cursor = collection.find({}) if query is None else collection.find(query)
             documents = await cursor.to_list(length=None)
-            for doc in documents:
-                doc['_id'] = str(doc['_id'])
+            id_fields.append('_id')
+            for document in documents:
+                for id_field in id_fields:
+                    document = utils.convert_id_str(document, id_field)
         except Exception as e:
             raise ValueError(f"An error occurred while getting the documents: {e}")
         return documents
     
-    async def get_document_by_id(self, db_name: str, collection_name: str, document_id: str):
+    async def get_document_by_id(self, db_name: str, collection_name: str, document_id: str, id_fields: list = []):
         try:
             collection = self.__client[f'{db_name}_{os.getenv('ENV')}'][collection_name]
             document = await collection.find_one({'_id': ObjectId(document_id)})
-            if document is not None:
-                document['_id'] = str(document['_id'])
-            print(document)
+            id_fields.append('_id')
+            for id_field in id_fields:
+                document = utils.convert_id_str(document, id_field)
 
         except Exception as e:
             raise ValueError(f"An error occurred while getting the document: {e}")
         return document
     
-    async def get_first_document(self, db_name: str, collection_name: str, query: dict = None):
+    async def get_first_document(self, db_name: str, collection_name: str, query: dict = None, id_fields: list = []):
         try:
             collection = self.__client[f'{db_name}_{os.getenv('ENV')}'][collection_name]
-            cursor = collection.find({}) if query is None else collection.find(query)
-            documents = await cursor.to_list(length=None)
-            for doc in documents:
-                doc['_id'] = str(doc['_id'])
+            document = await collection.find_one({}) if query is None else await collection.find_one(query)
+            id_fields.append('_id')
+            for id_field in id_fields:
+                document = utils.convert_id_str(document, id_field)
         except Exception as e:
-            raise ValueError(f"An error occurred while getting the documents: {e}")
-        return documents[0]
+            raise ValueError(f"An error occurred while getting one document: {e}")
+        return document
     
     async def count_documents(self, db_name: str, collection_name: str, query: dict = None):
         try:
@@ -148,7 +150,6 @@ class MongoDBService(MongoDBConfig):
     async def insert_sub_folders(self, db_name:str, main_folder_sku: str,sub_folder: dict):
         collection = 'sub_folders'
         prev_sub_folder = await self.get_document_by_field(db_name, collection, 'name', sub_folder['name'])
-        print(prev_sub_folder)
         if prev_sub_folder['exists']:
             return False, prev_sub_folder['sku']
         else:

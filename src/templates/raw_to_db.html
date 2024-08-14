@@ -15,7 +15,13 @@
 <body>
     <div id="container">
         <header>
-            <h1>H3DForge Back</h1>
+            <div id="source-div" class="selector-div">
+                <label for="source-select">Source:</label>
+                <select id="source-select" name="source"></select>
+                <label for='extension-select'>Extension:</label>
+                <select id='extension-select' name='extension'></select>
+                <button class="xmini-btn" id="select_source_ext-btn">Confirm</button>
+            </div>
             <nav>
                 <ul>
                     <li><a href="/">Home</a></li>
@@ -31,13 +37,11 @@
                     <ul id="file_info-ul">
                     </ul>
                 </div>
-                <div class="btn-div">
-                    <ul>
-                        <li><button id="get-btn">Get</button></li>
-                        <li><button id="load-btn">Load</button></li>
-                        <li><button id="skip-btn">Skip</button></li>
-                        <li><button id="fix-btn">Fix</button></li>
-                    </ul>
+                <div class="btn-div" id="file_info_btns-div">
+                    <button class="mini-btn" id="load-btn">Load</button>
+                    <button class="mini-btn" id="confirm_file_info-btn">Confirm</button>
+                    <button class="mini-btn" id="skip-btn">Skip</button>
+                    <button class="mini-btn" id="fix-btn">Fix</button>
                 </div>
             </div>
             <div id="file_list-div" class="info_box">
@@ -47,53 +51,60 @@
                     <ul id="file_list-ul">
                     </ul>
                 </div>
-                <div class="btn-div">
-                    <ul>
-                        <li><button id="load_model-btn">Load</button></li>
-                        <li><button id="confirm_model-btn">Confirm</button></li>
-                    </ul>
+                <div class="btn-div" id="file_list_btn-div">
+                    <button class='mini-btn' id="load_model-btn">Load</button>
+                    <button class='mini-btn' id="confirm_model-btn">Confirm</button>
+                </div>
+            </div>
+            <div class="info_box" id="category-div">
+                <h5>Category info</h5>
+                <div id="category-container">
+                    <div class="selector-div">
+                        <label for="category-select">Category:</label>
+                        <select id="category-select" name="category">
+                            <option value="wh">WarHammer</option>
+                            <option value="sc">StarCraft</option>
+                        </select>
+                        <button class="xmini-btn">Add</button>
+                    </div>
+                    <div class="selector-div">
+                        <label for="sub_category-select">Sub Category:</label>
+                        <select id="sub_category-select" name="sub_category">
+                        </select>
+                        <button class="xmini-btn">Add</button>
+                    </div>
+                    <div>
+                        <button id="select_category-btn" class="mini-btn">Load Form</button>
+                        <button class="xmini-btn">↺</button>
+                    </div>
                 </div>
             </div>
             <div id="model_form-div">
-                <div class="info_box" id="category-div">
-                    <h5>Category info</h5>
-                    <div id="category-container">
-                        <div class="selector-div">
-                            <label for="category-select">Category:</label>
-                            <select id="category-select" name="category">
-                                <option value="wh">WarHammer</option>
-                                <option value="sc">StarCraft</option>
-                            </select>
-                            <button class="xmini-btn">Add</button>
+                <div class="info_box" id="form-div">
+                    <h5>Model info</h5>
+                    <div id="form-container">
+                        <div id="model_details-div" class="form_box">
+                            <ul>
+                            </ul>
                         </div>
-                        <div class="selector-div">
-                            <label for="sub_category-select">Sub Category:</label>
-                            <select id="sub_category-select" name="sub_category">
-                            </select>
-                            <button class="xmini-btn">Add</button>
-                        </div>
-                        <div>
-                            <button id="select_category-btn" class="mini-btn">Load Form</button>
-                            <button class="mini-btn">↺</button>
+                        <div id="print_details-div" class="form_box">
+                            <ul>
+                            </ul>
                         </div>
                     </div>
                 </div>
-                <div class="info_box" id="form-div">
-                    <h5>Model info</h5>
-                </div>
                 <div class="info_box" id="final-div">
                     <h5>Final info</h5>
-                    <ul id="status-ul">
-                        <li id="load_file_status"><strong>Load File Status: </strong><p>Estado</p></li>
-                        <li id=""><strong>Field Status: </strong><p>Estado</p></li>
-                        <li id=""><strong>Field Status: </strong><p>Estado</p></li>
-                        <li id=""><strong>Field Status: </strong><p>Estado</p></li>
-                    </ul>
                 </div>
             </div>
             <div class="info_box" id="model_viewer-div">
             </div>
 
+            <div class="info_box" id="status-div">
+                <ul id="status-ul">
+
+                </ul>
+            </div>
         </main>
     </div>
 </body>

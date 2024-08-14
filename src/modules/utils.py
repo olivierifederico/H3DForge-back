@@ -19,6 +19,14 @@ def decode_url_params(url:str):
 def get_files_from_path(path:str):
     return [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
 
+def convert_id_str(d, key):
+    if '.' in key:
+        sub_doc, keyx = key.split('.')
+        d[sub_doc][keyx] = str(d[sub_doc][keyx])
+    else:
+        d[key] = str(d[key])
+    return d
+        
 
 def get_current_time():
     return now.strftime('%Y-%m-%d %H:%M:%S')

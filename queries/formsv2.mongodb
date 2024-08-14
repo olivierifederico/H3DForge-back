@@ -1,0 +1,85 @@
+use('h3dforge_dev')
+
+db['forms'].insertOne({
+    'name': 'Miniatures',
+    'id': 'dnd-min',
+    'model_details': {
+        'scale': {
+            'type': 'list',
+            'options': ['28mm', '32mm', '54mm']
+        },
+        'size': {
+            'type': 'list',
+            'options': ['Male', 'Female', 'None', 'Unknown']
+        },
+        'gender': {
+            'type': 'list',
+            'options': ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']
+        },
+        'race': {
+            'type': 'list',
+            'options': ['human', 'elf', 'dwarf']
+        },
+        'class': {
+            'type': 'list',
+            'options': ['barbarian', 'bard', 'cleric']
+        },
+        'weapons': {
+            'type': 'list',
+            'options': ['club', 'dagger', 'greatclub']
+        },
+        'armors': {
+            'type': 'list',
+            'options': ['padded', 'leather', 'studded leather']
+        },
+        'accessories': {
+            'type': 'list',
+            'options': ['amulet', 'ring', 'belt']
+        },
+        'others': {
+            'type': 'list',
+            'options': ['potion', 'scroll', 'wand']
+        },
+        'notes': {
+            'type': 'button',
+            'function': 'model_add_notes'
+        },
+        'problems': {
+            'type': 'button',
+            'function': 'model_add_problems'
+        }
+    },
+    'print_details': {
+        'supported': {
+            'type': 'boolean'
+        },
+        'ready_for_print': {
+            'type': 'boolean'
+        },
+        'base': {
+            'type': 'boolean'
+        },
+        'complexity': {
+            'type': 'list',
+            'options': ['Low', 'Medium', 'High']
+        },
+        'quality': {
+            'type': 'list',
+            'options': ['Low', 'Medium', 'High']
+        },
+        'FDM': {
+            'type': 'boolean'
+        },
+        'SLA': {
+            'type': 'boolean'
+        },
+        'notes': {
+            'type': 'button',
+            'function': 'print_add_notes'
+        },
+        'problems': {
+            'type': 'button',
+            'function': 'print_add_problems'
+        }
+    },
+})

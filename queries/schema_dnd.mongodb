@@ -14,14 +14,6 @@ db.createCollection("dnd_miniatures",{
             bsonType: "string",
             description: "must be a string and is required"
         },
-        's3_path': {
-            bsonType: "string",
-            description: "must be a string and is required"
-        },
-        'filename_variants': {
-            bsonType: "array",
-            description: "must be an array"
-        },
         'model_details': {
             bsonType: "object",
             required: ['name'],
@@ -70,9 +62,9 @@ db.createCollection("dnd_miniatures",{
                 description: 'must be a string'
             }
         },
-        'file_info': {
+        'print_details': {
             bsonType: "object",
-            required: ['source_id'],
+            required: ['supported'],
             'supported': {
                 bsonType: "bool",
                 description: "must be a boolean"
@@ -81,17 +73,49 @@ db.createCollection("dnd_miniatures",{
                 bsonType: "bool",
                 description: "must be a boolean"
             },
+            'base': {
+                bsonType: "bool",
+                description: "must be a boolean"
+            },
             'complexity': {
                 bsonType: "string",
                 description: "must be a string"
+            },
+            'quality': {
+                bsonType: "string",
+                description: "must be a string"
+            },
+            'FDM': {
+                bsonType: "bool",
+                description: "must be a boolean"
+            },
+            'SLA': {
+                bsonType: "bool",
+                description: "must be a boolean"
+            },
+            'problems_detected': {
+                bsonType: "array",
+                description: "must be an array"
             },
             'notes': {
                 bsonType: "string",
                 description: "must be a string"
             },
+        },
+        'file_details': {
+            bsonType: "object",
+            required: ['source_id'],
             'source_id': {
                 bsonType: "string",
                 description: "source sku must be a string and is required"
+            },
+            's3_path': {
+                bsonType: "string",
+                description: "must be a string and is required"
+            },
+            'filename_variants': {
+                bsonType: "array",
+                description: "must be an array"
             },
             'designer_id': {
                 bsonType: "string",

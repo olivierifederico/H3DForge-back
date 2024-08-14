@@ -1,26 +1,81 @@
-import { encodeUrlParam, load_model_visor } from "./utils.js";
-// import { load_model_visor } from "./model_viewer.js";
+import { encodeUrlParam, load_model_visor, capitalize_first_letter } from "./utils.js";
 
 document.addEventListener('DOMContentLoaded', (event) => {
-    document.getElementById('get-btn').addEventListener('click', get_file);
-    document.getElementById('load-btn').addEventListener('click', load_file);
+    document.getElementById('load-btn').addEventListener('click', get_file);
+    document.getElementById('confirm_file_info-btn').addEventListener('click', confirm_file_info);
     document.getElementById('skip-btn').addEventListener('click', skip);
     document.getElementById('fix-btn').addEventListener('click', fix);
     document.getElementById('load_model-btn').addEventListener('click', load_3d_model);
     document.getElementById('category-select').addEventListener('change', category_select);
+    document.getElementById('select_category-btn').addEventListener('click', load_form);
+    document.getElementById('select_source_ext-btn').addEventListener('click', confirm_source);
+    document.getElementById('source-select').addEventListener('change', update_source_data);
+    // document.getElementById('confirm_model-btn').addEventListener('click', confirm_model);
 });
 
-let front_data = null;
-let raw_file_data;
-let to_load_data = {};
-let total_files = 0;
-let categories, sub_categories;
 
-let model_loaded = false;
+let sources, categories, sub_categories, raw_file_data, front_data;
+
+
+let to_load_data = {
+    'model_details': {},
+    'print_details': {},
+    'file_details': {}
+};
+
+let handling_data = {
+    'extension': false,
+    'print': false,
+    'file': false,
+    'file_count': 0,
+}
+
+let steps = {
+    'init': 'ready',
+    'source': 'ready',
+    'file': 'ready',
+    'file list': 'ready',
+    'model 3D': 'ready',
+    'category': 'ready',
+    'form': 'ready',
+}
+
 
 init_page();
 
 function init_page() {
+    init_status_info();
+    let params = new URLSearchParams(
+        {
+            'database': 'h3dforge',
+            'name': 'sources',
+        }
+    );
+    fetch(`/mongodb/get_documents/?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+        .then(response => response.json())
+        .then(data => {
+            sources = data;
+            let source_select = document.getElementById('source-select');
+            for (let source of sources) {
+                let option = document.createElement('option');
+                option.value = source['_id'];
+                option.text = capitalize_first_letter(source['name']) + '-' + capitalize_first_letter(source['server']);
+                source_select.appendChild(option);
+            }
+            let dumb_option = document.createElement('option');
+            dumb_option.value = null;
+            dumb_option.text = 'No source';
+            source_select.appendChild(dumb_option);
+
+        })
+        .then(() => {
+            update_source_data();
+        })
     fetch('/mongodb/get_categories_data', {
         method: 'GET',
         headers: {
@@ -38,17 +93,287 @@ function init_page() {
                 option.text = category['name'];
                 category_select.appendChild(option);
             }
-
         })
         .then(() => {
             category_select();
         })
         .catch((error) => {
             console.error('Error:', error);
+        })
+        .then(() => {
+            update_steps('init', 'done');
+            disable_all();
+            set_status_div_children('enable', 'source-div', ['load-btn', 'skip-btn', 'fix-btn']);
+
+
+        })
+}
+
+function disable_all() {
+    const elements = document.querySelectorAll('input, button, select, textarea');
+    elements.forEach(element => {
+        element.disabled = true;
+    });
+}
+
+function reset_page_to_step(step) {
+    switch (step) {
+        case 'source':
+            reset_to_source();
+            update_status_info();
+            break;
+    }
+}
+
+window.print_add_problems = function () {
+    let problem = prompt("Please enter the print problems");
+    problem = problem == null || problem == "" ? false : encodeUrlParam(problem);
+    if (!problem) {
+        alert('print problem cancelled');
+        return;
+    } else {
+        to_load_data['print']['problems'] = problem;
+    }
+}
+
+window.print_add_notes = function () {
+    let notes = prompt("Please enter the print notes");
+    notes = notes == null || notes == "" ? false : encodeUrlParam(notes);
+    if (!notes) {
+        alert('print notes cancelled');
+        return;
+    } else {
+        to_load_data['print']['notes'] = notes;
+    }
+}
+
+window.model_add_problems = function () {
+    let problem = prompt("Please enter the model problems");
+    problem = problem == null || problem == "" ? false : encodeUrlParam(problem);
+    if (!problem) {
+        alert('Model problem cancelled');
+        return;
+    } else {
+        to_load_data['model']['problems'] = problem;
+    }
+}
+
+window.model_add_notes = function () {
+    let notes = prompt("Please enter the model notes");
+    notes = notes == null || notes == "" ? false : encodeUrlParam(notes);
+    if (!notes) {
+        alert('model notes cancelled');
+        return;
+    } else {
+        to_load_data['model']['notes'] = notes;
+    }
+}
+
+function update_steps(key, value) {
+    steps[key] = value;
+    update_status_info();
+}
+
+function reset_to_source() {
+    to_load_data = {
+        'model_details': {},
+        'print_details': {},
+        'file_details': {}
+    };
+    handling_data = {
+        'extension': false,
+        'print': false,
+        'file': false,
+        'file_count': 0,
+    }
+    steps = {
+        'init': 'done',
+        'source': 'ready',
+        'file': 'ready',
+        'file list': 'ready',
+        'model 3D': 'ready',
+        'category': 'ready',
+        'form': 'ready',
+    }
+    disable_all();
+    set_status_div_children('enable', 'source-div', ['load-btn', 'skip-btn', 'fix-btn']);
+}
+
+function update_status_info() {
+    let status_div = document.getElementById('status-div');
+    let status_ul = status_div.querySelector('ul');
+    for (let status of Object.keys(steps)) {
+        let li = document.getElementById(status + '_status_info-li');
+        let p = li.querySelector('p');
+        p.innerHTML = '<strong>' + capitalize_first_letter(status) + '</strong>: ' + capitalize_first_letter(steps[status]);
+    }
+}
+
+function init_status_info() {
+    let status_div = document.getElementById('status-div');
+    let status_ul = status_div.querySelector('ul');
+    for (let status of Object.keys(steps)) {
+        let li = document.createElement('li');
+        li.id = status + '_status_info-li';
+        let p = document.createElement('p');
+        p.innerHTML = '<strong>' + capitalize_first_letter(status) + '</strong>: ' + capitalize_first_letter(steps[status]);
+        li.appendChild(p);
+        status_ul.appendChild(li);
+    }
+}
+
+function confirm_source() {
+    let button = document.getElementById('select_source_ext-btn');
+    if (steps['source'] == 'ready') {
+        let source_id = document.getElementById('source-select').value;
+        let extension = document.getElementById('extension-select').value;
+        set_status_div_children('disable', 'source-div', ['select_source_ext-btn']);
+        button.textContent = 'Reset';
+        to_load_data['file_details']['source_id'] = source_id;
+        handling_data['extension'] = extension;
+        update_steps('source', 'done');
+        set_status_div_children('enable', 'file_info_btns-div', ['confirm_file_info-btn', 'skip-btn', 'fix-btn']);
+    } else {
+        set_status_div_children('enable', 'source-div', ['select_source_ext-btn']);
+        button.textContent = 'Confirm';
+        reset_page_to_step('source');
+        update_steps('source', 'ready');
+    }
+
+}
+
+function set_status_div_children(execution, div_id, except) {
+    let div = document.getElementById(div_id);
+    if (execution == 'enable') {
+        for (let child of div.children) {
+            if (!except.includes(child.id)) {
+                child.disabled = false;
+            }else{
+                child.disabled = true;
+            }
+        }
+    } else if (execution == 'disable') {
+        for (let child of div.children) {
+            if (!except.includes(child.id)) {
+                child.disabled = true;
+            }else{
+                child.disabled = false;
+            }
+        }
+    }
+}
+
+function update_source_data() {
+    let source_id = document.getElementById('source-select').value;
+    let source = sources.find(source => source['_id'] == source_id);
+    let select = document.getElementById('extension-select');
+    let source_div = document.getElementById('source-div');
+    select.innerHTML = '';
+    if (source == undefined || source['content'] == undefined || source['content']['types'] == undefined) {
+        let option = document.createElement('option');
+        option.value = 'no_extension';
+        option.text = 'No types';
+        select.appendChild(option);
+        select.disabled = true;
+    } else {
+        for (let key in source['content']['types']) {
+            select.disabled = false;
+            let option = document.createElement('option');
+            option.value = key;
+            option.text = key;
+            select.appendChild(option);
+        }
+        let any_option = document.createElement('option');
+        any_option.value = 'any_extension';
+        any_option.text = 'Any';
+        select.appendChild(any_option);
+    }
+}
+
+function load_form() {
+    let cat_select = document.getElementById('category-select');
+    let sub_select = document.getElementById('sub_category-select');
+    let cat_id = cat_select.value;
+    if (sub_select.value != 'null') {
+        cat_id += '-' + sub_select.value;
+    }
+    fetch('/mongodb/get_form/' + cat_id, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+        .then(response => response.json())
+        .then(data => {
+            let model_fields = data['model_details'];
+            let print_fields = data['print_details'];
+            generate_input_form('model_details-div', model_fields);
+            generate_input_form('print_details-div', print_fields);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
         });
-    document.getElementById('fix-btn').disabled = true;
-    document.getElementById('load-btn').disabled = true;
-    document.getElementById('skip-btn').disabled = true;
+}
+
+function generate_input_form(div_id, fields) {
+    let div = document.getElementById(div_id);
+    let ul = div.querySelector('ul');
+    let button_div = document.createElement('div');
+    button_div.className = 'btn-form';
+    let key_list = Object.keys(fields);
+    console.log(key_list);
+    let button_list = []
+    ul.innerHTML = '';
+    for (let key of key_list) {
+        let field = fields[key];
+        let li = document.createElement('li');
+        li.className = 'form-group';
+        let label = document.createElement('label');
+        label.for = key;
+        label.textContent = (capitalize_first_letter(key) + ':').replace(/_/g, ' ');
+        let select_field = document.createElement('select');
+        if ('options' in field) {
+            for (let option of field['options']) {
+                let option_elem = document.createElement('option');
+                option_elem.value = option;
+                option_elem.textContent = option;
+                select_field.appendChild(option_elem);
+            }
+            select_field.name = field['name'];
+            select_field.id = field['name'];
+            li.appendChild(label);
+            li.appendChild(select_field);
+        } else if (field['type'] == 'boolean') {
+            let input_field = document.createElement('input');
+            input_field.type = 'checkbox';
+            input_field.name = key;
+            input_field.id = key;
+            li.appendChild(label);
+            li.appendChild(input_field);
+        } else if (field['type'] == 'button') {
+            let button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = capitalize_first_letter(key);
+            button.id = key + '-btn';
+            button.className = 'btn btn-primary mini-btn';
+            button.addEventListener('click', () => {
+                let func = window[field['function']];
+                if (typeof func === 'function') {
+                    func(); // Llamar a la función si es válida
+                } else {
+                    console.error(`${field['function']} no es una función o no está definida.`);
+                }
+            });
+            button_list.push(button);
+            // li.appendChild(button);
+        }
+        ul.appendChild(li);
+    }
+    for (let button of button_list) {
+        button_div.appendChild(button);
+    }
+    div.appendChild(button_div);
+
 }
 
 function category_select() {
@@ -68,7 +393,6 @@ function category_select() {
         option.text = 'No subcategories';
         sub_select.appendChild(option);
         sub_select.disabled = true;
-
     } else {
         sub_select.disabled = false;
         sub_select.innerHTML = '';
@@ -86,7 +410,11 @@ function category_select() {
 }
 
 function get_file() {
-    fetch('/mongodb/get_first_document', {
+    set_status_div_children('disable', 'file_info_btns-div', [ 'skip-btn', 'fix-btn', 'confirm_file_info-btn']);
+    
+    let tuqi = encodeUrlParam(handling_data['extension']);
+    console.log(tuqi)
+    fetch('/mongodb/file_to_prepare/' + to_load_data['file_details']['source_id'] + '/' + encodeUrlParam(handling_data['extension']), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -95,6 +423,7 @@ function get_file() {
         .then(response => response.json())
         .then(data => {
             raw_file_data = data;
+            console.log(data);
             to_load_data['source_path'] = data['url'];
             front_data = {
                 'ID': data['_id'],
@@ -113,18 +442,13 @@ function get_file() {
                 li.innerHTML = '<strong>' + key + '</strong>: ' + front_data[key];
                 file_info_ul.appendChild(li);
             }
-            document.getElementById('load-btn').disabled = false;
-            document.getElementById('fix-btn').disabled = false;
-
-
-
         })
         .catch((error) => {
             console.error('Error:', error);
         });
 }
 
-function load_file() {
+function confirm_file_info() {
     let file_id = raw_file_data['_id'];
     fetch('/mongodb/get_document_by_id/' + file_id, {
         method: 'GET',
@@ -135,6 +459,7 @@ function load_file() {
         .then(response => response.json())
         .then(data => {
             let encodedPath = encodeUrlParam(data['s3']['path']);
+            console.log(encodedPath);
             fetch('/s3/download_from_path/' + encodedPath, {
                 method: 'GET',
                 headers: {
@@ -145,8 +470,6 @@ function load_file() {
                 .then(data => {
                     // Aquí puedes agregar lógica para manejar la respuesta
                     let file_ul = document.getElementById('file_list-ul')
-                    total_files = data['files'].length;
-                    document.getElementById('file_list-div').style.display = 'flex';
                     const style = window.getComputedStyle(document.getElementById('file_list-div'));
                     const totalHeight = document.getElementById('file_list-div').clientHeight;
                     const paddingTop = parseFloat(style.paddingTop);
@@ -165,18 +488,19 @@ function load_file() {
                         let label = document.createElement('label');
                         label.appendChild(radio_button);
                         label.appendChild(document.createTextNode(filename));
-
                         li.appendChild(label);
                         file_ul.appendChild(li);
                     }
-
-                    document.getElementById('load-btn').disabled = true;
-                    document.getElementById('get-btn').disabled = true;
+                    handling_data['file_count'] = data['files'].length;
+                    set_status_div_children('disable', 'file_info_btns-div', ['skip-btn', 'fix-btn']);
+                    update_steps('file', 'done');
+                    set_status_div_children('enable', 'file_list_btn-div', ['confirm_model-btn']);
                 })
 
         })
         .catch((error) => {
             console.error('Error:', error);
+            update_steps('file', 'error');
         });
 }
 
@@ -216,10 +540,11 @@ function load_3d_model() {
         const selectedFilename = selectedRadio.value;
         load_model_visor(selectedFilename)
             .then(height_cm => {
-                to_load_data['original_name'] = selectedFilename;
-                to_load_data['height_cm'] = height_cm;
+                to_load_data['file_details']['original_name'] = selectedFilename;
+                to_load_data['model_details']['height_cm'] = height_cm;
+                document.getElementById('load_model-btn').textContent = 'Reload model';
+                set_status_div_children('enable', 'file_list_btn-div', []);
             })
-        model_loaded = true;
     } else {
         alert('Por favor selecciona un archivo');
     }

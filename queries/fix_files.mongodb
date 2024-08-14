@@ -1,0 +1,13 @@
+use('h3dforge_dev')
+db['sources'].updateMany({}, {$set: {'server': 'mega'}})
+
+// db['sources'].updateMany({}, {$set: {id: '$prefix-$sku_number'}})
+// db['sources'].updateMany({}, {$unset: {'sku': 1}})
+
+// const sourceData = db.sources.findOne({}, { name: 1, _id: 1 });
+
+// // Paso 2: Actualizar todos los documentos en la colección `files` con el objeto obtenido
+// db.files.updateMany(
+//   {},
+//   { $set: { 'source_data': sourceData } }
+// );

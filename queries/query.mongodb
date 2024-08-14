@@ -1,6 +1,6 @@
 use('h3dforge_dev')
 
-db['files'].find({'status.s3':true}).count()
+db['files'].find({'extension':'.obj'}).count()
 
 
     // manual upload

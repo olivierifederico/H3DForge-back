@@ -1,7 +1,7 @@
 export function encodeUrlParam(param) {
     // param = param.toLocaleLowerCase();
-    let replacements = { '/': '_barra_', ' ': '_espacio_' };
-    return param.replace(/[/ ]/g, match => replacements[match]);
+    let replacements = { '/': '_barra_', ' ': '_espacio_', '.': '_punto_' };
+    return param.replace(/[/ .]/g, match => replacements[match]);
 }
 
 // Variables globales
@@ -118,7 +118,6 @@ export function load_model_visor(url) {
     });
 }
 
-
 function adjustCameraOrthographic(model) {
     // Obtener el tamaño del modelo
     const box = new THREE.Box3().setFromObject(model);
@@ -168,4 +167,9 @@ function get_model_height_cm(model) {
     const height_cm = height_mm / 10 // Convertir metros a centímetros
 
     return parseFloat(height_cm.toFixed(2));
+}
+
+export function capitalize_first_letter(str) {
+    if (!str) return ''; // Verifica que el string no esté vacío
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }

@@ -15,18 +15,37 @@ body {
 #container {
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-    /* grid-gap: 20px; */
+    grid-template-rows: 0.02fr 0.97fr;
     height: 100vh;
     width: 100vw;
 }
 
 header {
     background-color: #1E1E1E;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
     padding: 18px;
     text-align: center;
     border-bottom: 1px solid #00FF41;
     /* margin-bottom: 20px; Añadir margen en la parte inferior del header */
+}
+
+#source-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: left;
+}
+
+#source-div ul {
+    display: flex;
+    flex-direction: row;
+    list-style-type: none;
+
+}
+
+#source-div select{
+    margin-right: 5px;
 }
 
 header h1 {
@@ -64,26 +83,26 @@ main {
 
 #raw_to_db-container {
     display: grid;
-    grid-template-columns: 0.2fr 1fr 0.5fr;
-    grid-template-rows: 0.3fr auto;
+    grid-template-columns: 0.22fr 1fr 1fr;
+    grid-template-rows: 0.3fr 1fr 0.2fr 0.05fr;
     grid-gap: 20px;
     grid-template-areas: 
         "files_info file_data model_viewer"
-        "file_list file_data model_viewer";
+        "file_list file_data model_viewer"
+        "category file_data model_viewer"
+        "status status status";
 }
 
 #file_info-div {
     grid-area: files_info;
     display: flex;
     flex-direction: column;
-    justify-content: center;
 }
 
 #file_list-div {
     grid-area: file_list;
-    display: none;
+    display: flex;
     flex-direction: column;
-    justify-content: center;
 }
 
 #file_list-ul {
@@ -93,7 +112,6 @@ main {
     max-height: 100%;
     padding: 0;
     margin: 0;
-    margin-bottom: 10px;
     overflow-y: auto;
 }
 
@@ -105,16 +123,62 @@ main {
     margin-top: 0px;
 }
 
+
 #model_form-div {
     grid-area: file_data;
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: 0.1fr auto auto;
+    grid-template-rows: 0.6fr auto;
     row-gap: 20px;
     grid-template-areas:
-        "category"
         "model_form"
-        "final_info";
+        "final_info"
+}
+
+#form-container {
+    display: grid;
+    grid-template-areas: 
+        'model_form print_form';
+    grid-template-columns: 0.5fr 0.5fr;
+    column-gap: 20px
+}
+
+#form-container ul li{
+    list-style-type: none;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#form-container select {
+    border-radius: 5px;
+    margin-left: 5px;
+}
+
+
+#status-div {
+    grid-area: status;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+#status-div ul {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0;
+    margin: 0;
+}
+
+#status-div ul li {
+    display: flex;
+    flex-direction: row;
+}
+
+#status-div ul li p {
+    margin-left: 2px;
 }
 
 #category-div {
@@ -126,13 +190,18 @@ main {
 
 #category-container {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-between;
     vertical-align: middle;
 }
 
+#category-container div {
+    margin: 5px 0;
+}
+
 .selector-div {
     display: flex;
+    justify-content: space-between;
     align-items: center;
     margin-top: auto;
     margin-bottom: auto;
@@ -223,6 +292,16 @@ main {
     justify-content: right;
 }
 
+.btn-form {
+    display: flex;
+    flex-direction: row;
+    justify-content: left;
+}
+
+.btn-form button {
+    margin-right: 5px;
+}
+
 button, .button {
     background-color: #1E1E1E; /* Fondo oscuro */
     color: #00FF41; /* Texto en color neón */
@@ -249,6 +328,16 @@ button, .button {
     font-size: 0.5em;
     cursor: pointer;
     padding: 2px 5px;
+    transition: background-color 0.3s, color 0.3s, transform 0.3s; /* Transiciones suaves */
+}
+
+.mid-mini-btn {
+    border-radius: 5px;
+    border: 1px solid #00FF41;
+    margin-left: 5px;
+    font-size: 0.6em;
+    cursor: pointer;
+    padding: 3px 5px;
     transition: background-color 0.3s, color 0.3s, transform 0.3s; /* Transiciones suaves */
 }
 
