@@ -10,7 +10,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('select_category-btn').addEventListener('click', load_form);
     document.getElementById('select_source_ext-btn').addEventListener('click', confirm_source);
     document.getElementById('source-select').addEventListener('change', update_source_data);
-    // document.getElementById('confirm_model-btn').addEventListener('click', confirm_model);
+    document.getElementById('test-btn').addEventListener('click', test_function);
+    document.getElementById('confirm_model-btn').addEventListener('click', confirm_file_list);
 });
 
 
@@ -26,7 +27,6 @@ let to_load_data = {
 let handling_data = {
     'extension': false,
     'print': false,
-    'file': false,
     'file_count': 0,
 }
 
@@ -34,12 +34,23 @@ let steps = {
     'init': 'ready',
     'source': 'ready',
     'file': 'ready',
-    'file list': 'ready',
     'model 3D': 'ready',
     'category': 'ready',
     'form': 'ready',
 }
 
+function test_function() {
+    console.log('====================');
+    console.log('to_load_data');
+    console.log(to_load_data);
+    console.log('====================');
+    console.log('handling_data');
+    console.log(handling_data);
+    console.log('====================');
+    console.log('steps');
+    console.log(steps);
+    console.log('====================');
+}
 
 init_page();
 
@@ -101,19 +112,243 @@ function init_page() {
             console.error('Error:', error);
         })
         .then(() => {
-            update_steps('init', 'done');
+            set_base_data();
+            update_steps('source', 'in progress');
             disable_all();
             set_status_div_children('enable', 'source-div', ['load-btn', 'skip-btn', 'fix-btn']);
-
-
         })
 }
+
+function set_base_data() {
+    to_load_data = {
+        'model_details': {},
+        'print_details': {},
+        'file_details': {}
+    };
+    handling_data = {
+        'extension': false,
+        'print': false,
+        'file_count': 0,
+    };
+    steps = {
+        'init': 'done',
+        'source': 'ready',
+        'file': 'ready',
+        'model 3D': 'ready',
+        'category': 'ready',
+        'form': 'ready',
+    };
+}
+
+function confirm_source() {
+    let button = document.getElementById('select_source_ext-btn');
+    if (steps['source'] == 'in progress') {
+        let source_id = document.getElementById('source-select').value;
+        let extension = document.getElementById('extension-select').value;
+        set_status_div_children('disable', 'source-div', ['select_source_ext-btn']);
+        button.textContent = 'Reset';
+        to_load_data['file_details']['source_id'] = source_id;
+        handling_data['extension'] = extension;
+        update_steps('source', 'done');
+        update_steps('file', 'in progress');
+        set_status_div_children('enable', 'file_info_btns-div', ['confirm_file_info-btn', 'skip-btn', 'fix-btn']);
+    } else {
+        set_status_div_children('enable', 'source-div', ['select_source_ext-btn']);
+        button.textContent = 'Confirm';
+        reset_page_to_step('source');
+        update_steps('source', 'in progress');
+        update_steps('file', 'ready');
+    }
+
+}
+
+function update_source_data() {
+    let source_id = document.getElementById('source-select').value;
+    let source = sources.find(source => source['_id'] == source_id);
+    let select = document.getElementById('extension-select');
+    let source_div = document.getElementById('source-div');
+    select.innerHTML = '';
+    if (source == undefined || source['content'] == undefined || source['content']['types'] == undefined) {
+        let option = document.createElement('option');
+        option.value = 'no_extension';
+        option.text = 'No types';
+        select.appendChild(option);
+        select.disabled = true;
+    } else {
+        for (let key in source['content']['types']) {
+            select.disabled = false;
+            let option = document.createElement('option');
+            option.value = key;
+            option.text = key;
+            select.appendChild(option);
+        }
+        let any_option = document.createElement('option');
+        any_option.value = 'any_extension';
+        any_option.text = 'Any';
+        select.appendChild(any_option);
+    }
+}
+
+function get_file() {
+    set_status_div_children('disable', 'file_info_btns-div', ['skip-btn', 'fix-btn', 'confirm_file_info-btn']);
+    fetch('/mongodb/file_to_prepare/' + to_load_data['file_details']['source_id'] + '/' + encodeUrlParam(handling_data['extension']), {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+        .then(response => response.json())
+        .then(data => {
+            raw_file_data = data;
+            to_load_data['file_details']['source_path'] = data['url'];
+            front_data = {
+                'ID': data['_id'],
+                'Name': data['name'],
+                'Size': data['size'],
+            }
+            let file_info_div = document.getElementById('file_info-div');
+            let file_info_ul = file_info_div.querySelector('ul');
+
+            // Limpiar la lista
+            while (file_info_ul.firstChild) {
+                file_info_ul.removeChild(file_info_ul.firstChild);
+            }
+            for (let key in front_data) {
+                let li = document.createElement('li');
+                li.innerHTML = '<strong>' + key + '</strong>: ' + front_data[key];
+                file_info_ul.appendChild(li);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
+function confirm_file_info() {
+    let file_id = raw_file_data['_id'];
+    fetch('/mongodb/get_document_by_id/' + file_id, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+        .then(response => response.json())
+        .then(data => {
+            let encodedPath = encodeUrlParam(data['s3']['path']);
+            fetch('/s3/download_from_path/' + encodedPath, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Aquí puedes agregar lógica para manejar la respuesta
+                    let file_ul = document.getElementById('file_list-ul')
+                    const style = window.getComputedStyle(document.getElementById('file_list-div'));
+                    const totalHeight = document.getElementById('file_list-div').clientHeight;
+                    const paddingTop = parseFloat(style.paddingTop);
+                    const paddingBottom = parseFloat(style.paddingBottom);
+                    const freeHeight = totalHeight - paddingTop - paddingBottom - 53 - 50;
+                    // const freeHeight = 200;
+                    document.getElementById('file_list-ul').style.height = freeHeight + 'px';
+                    for (let filename of data['files']) {
+                        let li = document.createElement('li');
+                        let radio_button = document.createElement('input');
+                        radio_button.type = 'radio';
+                        radio_button.name = 'file';
+                        radio_button.value = filename;
+
+                        // Crear una etiqueta para el radio button
+                        let label = document.createElement('label');
+                        label.appendChild(radio_button);
+                        label.appendChild(document.createTextNode(filename));
+                        li.appendChild(label);
+                        file_ul.appendChild(li);
+                    }
+                    handling_data['file_count'] = data['files'].length;
+                    set_status_div_children('disable', 'file_info_btns-div', ['skip-btn', 'fix-btn']);
+                    update_steps('file', 'done');
+                    set_status_div_children('enable', 'file_list_btn-div', ['confirm_model-btn']);
+                    update_steps('model 3D', 'in progress');
+                })
+
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            update_steps('file', 'error');
+        });
+}
+
+function load_3d_model() {
+    const selectedRadio = document.querySelector('input[name="file"]:checked');
+    if (selectedRadio) {
+        const selectedFilename = selectedRadio.value;
+        load_model_visor(selectedFilename)
+            .then(height_cm => {
+                to_load_data['file_details']['original_name'] = selectedFilename;
+                to_load_data['model_details']['height_cm'] = height_cm;
+                document.getElementById('load_model-btn').textContent = 'Reload model';
+                set_status_div_children('enable', 'file_list_btn-div', []);
+            })
+    } else {
+        alert('Por favor selecciona un archivo');
+    }
+}
+
+function confirm_file_list() {
+    if (steps['model 3D'] == 'in progress') {
+        let selectedRadio = document.querySelector('input[name="file"]:checked');
+        let selectedFilename = selectedRadio.value;
+        // to_load_data['file_details']['filename'] = selectedFilename;
+        set_status_div_children('disable', 'file_list_btn-div', ['confirm_model-btn']);
+        document.getElementById('confirm_model-btn').textContent = 'Reset';
+        update_steps('model 3D', 'done');
+        update_steps('category', 'in progress');
+        set_status_div_children('enable', 'file_list_btn-div', ['confirm_model-btn']);
+        set_status_div_children('enable', 'category-container', [], 'selector-div');
+        document.getElementById('select_category-btn').disabled = false;
+    }else {
+        set_status_div_children('disable', 'file_list_btn-div', ['confirm_model-btn']);
+        document.getElementById('confirm_model-btn').textContent = 'Reset';
+        document.getElementById('select_category-btn').disabled = true;
+        update_steps('model 3D', 'ready');
+        update_steps('category', 'ready');
+    }
+}
+
+function load_form() {
+    let cat_select = document.getElementById('category-select');
+    let sub_select = document.getElementById('sub_category-select');
+    let cat_id = cat_select.value;
+    if (sub_select.value != 'null') {
+        cat_id += '-' + sub_select.value;
+    }
+    fetch('/mongodb/get_form/' + cat_id, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+        .then(response => response.json())
+        .then(data => {
+            let model_fields = data['model_details'];
+            let print_fields = data['print_details'];
+            generate_input_form('model_details-div', model_fields);
+            generate_input_form('print_details-div', print_fields);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 
 function disable_all() {
     const elements = document.querySelectorAll('input, button, select, textarea');
     elements.forEach(element => {
         element.disabled = true;
     });
+    document.getElementById('test-btn').disabled = false;
 }
 
 function reset_page_to_step(step) {
@@ -122,50 +357,6 @@ function reset_page_to_step(step) {
             reset_to_source();
             update_status_info();
             break;
-    }
-}
-
-window.print_add_problems = function () {
-    let problem = prompt("Please enter the print problems");
-    problem = problem == null || problem == "" ? false : encodeUrlParam(problem);
-    if (!problem) {
-        alert('print problem cancelled');
-        return;
-    } else {
-        to_load_data['print']['problems'] = problem;
-    }
-}
-
-window.print_add_notes = function () {
-    let notes = prompt("Please enter the print notes");
-    notes = notes == null || notes == "" ? false : encodeUrlParam(notes);
-    if (!notes) {
-        alert('print notes cancelled');
-        return;
-    } else {
-        to_load_data['print']['notes'] = notes;
-    }
-}
-
-window.model_add_problems = function () {
-    let problem = prompt("Please enter the model problems");
-    problem = problem == null || problem == "" ? false : encodeUrlParam(problem);
-    if (!problem) {
-        alert('Model problem cancelled');
-        return;
-    } else {
-        to_load_data['model']['problems'] = problem;
-    }
-}
-
-window.model_add_notes = function () {
-    let notes = prompt("Please enter the model notes");
-    notes = notes == null || notes == "" ? false : encodeUrlParam(notes);
-    if (!notes) {
-        alert('model notes cancelled');
-        return;
-    } else {
-        to_load_data['model']['notes'] = notes;
     }
 }
 
@@ -200,8 +391,8 @@ function reset_to_source() {
 }
 
 function update_status_info() {
-    let status_div = document.getElementById('status-div');
-    let status_ul = status_div.querySelector('ul');
+    // let status_div = document.getElementById('status-div');
+    // let status_ul = status_div.querySelector('ul');
     for (let status of Object.keys(steps)) {
         let li = document.getElementById(status + '_status_info-li');
         let p = li.querySelector('p');
@@ -222,33 +413,33 @@ function init_status_info() {
     }
 }
 
-function confirm_source() {
-    let button = document.getElementById('select_source_ext-btn');
-    if (steps['source'] == 'ready') {
-        let source_id = document.getElementById('source-select').value;
-        let extension = document.getElementById('extension-select').value;
-        set_status_div_children('disable', 'source-div', ['select_source_ext-btn']);
-        button.textContent = 'Reset';
-        to_load_data['file_details']['source_id'] = source_id;
-        handling_data['extension'] = extension;
-        update_steps('source', 'done');
-        set_status_div_children('enable', 'file_info_btns-div', ['confirm_file_info-btn', 'skip-btn', 'fix-btn']);
-    } else {
-        set_status_div_children('enable', 'source-div', ['select_source_ext-btn']);
-        button.textContent = 'Confirm';
-        reset_page_to_step('source');
-        update_steps('source', 'ready');
-    }
-
-}
-
-function set_status_div_children(execution, div_id, except) {
+function set_status_div_children(execution, div_id, except = [], div_class = null) {    
     let div = document.getElementById(div_id);
+    if (div_class) {
+        let sub_divs = div.getElementsByClassName(div_class);
+        for (let sub_div of sub_divs) {
+            for (let child of sub_div.children) {
+                if (execution == 'enable') {
+                    if (!except.includes(child.id)) {
+                        child.disabled = false;
+                    } else {
+                        child.disabled = true;
+                    }
+                } else if (execution == 'disable') {
+                    if (!except.includes(child.id)) {
+                        child.disabled = true;
+                    } else {
+                        child.disabled = false;
+                    }
+                }
+            }
+        }
+    }
     if (execution == 'enable') {
         for (let child of div.children) {
             if (!except.includes(child.id)) {
                 child.disabled = false;
-            }else{
+            } else {
                 child.disabled = true;
             }
         }
@@ -256,67 +447,21 @@ function set_status_div_children(execution, div_id, except) {
         for (let child of div.children) {
             if (!except.includes(child.id)) {
                 child.disabled = true;
-            }else{
+            } else {
                 child.disabled = false;
             }
         }
     }
 }
 
-function update_source_data() {
-    let source_id = document.getElementById('source-select').value;
-    let source = sources.find(source => source['_id'] == source_id);
-    let select = document.getElementById('extension-select');
-    let source_div = document.getElementById('source-div');
-    select.innerHTML = '';
-    if (source == undefined || source['content'] == undefined || source['content']['types'] == undefined) {
-        let option = document.createElement('option');
-        option.value = 'no_extension';
-        option.text = 'No types';
-        select.appendChild(option);
-        select.disabled = true;
-    } else {
-        for (let key in source['content']['types']) {
-            select.disabled = false;
-            let option = document.createElement('option');
-            option.value = key;
-            option.text = key;
-            select.appendChild(option);
-        }
-        let any_option = document.createElement('option');
-        any_option.value = 'any_extension';
-        any_option.text = 'Any';
-        select.appendChild(any_option);
-    }
-}
-
-function load_form() {
-    let cat_select = document.getElementById('category-select');
-    let sub_select = document.getElementById('sub_category-select');
-    let cat_id = cat_select.value;
-    if (sub_select.value != 'null') {
-        cat_id += '-' + sub_select.value;
-    }
-    fetch('/mongodb/get_form/' + cat_id, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-        .then(response => response.json())
-        .then(data => {
-            let model_fields = data['model_details'];
-            let print_fields = data['print_details'];
-            generate_input_form('model_details-div', model_fields);
-            generate_input_form('print_details-div', print_fields);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
+// CONTINUAR ACA, FALTA ACTIVAR EL CONFIRM
 function generate_input_form(div_id, fields) {
     let div = document.getElementById(div_id);
+    for (let child of div.children) {
+        if (child.tagName != 'UL') {
+            div.removeChild(child);
+        }
+    }
     let ul = div.querySelector('ul');
     let button_div = document.createElement('div');
     button_div.className = 'btn-form';
@@ -409,101 +554,6 @@ function category_select() {
     }
 }
 
-function get_file() {
-    set_status_div_children('disable', 'file_info_btns-div', [ 'skip-btn', 'fix-btn', 'confirm_file_info-btn']);
-    
-    let tuqi = encodeUrlParam(handling_data['extension']);
-    console.log(tuqi)
-    fetch('/mongodb/file_to_prepare/' + to_load_data['file_details']['source_id'] + '/' + encodeUrlParam(handling_data['extension']), {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-        .then(response => response.json())
-        .then(data => {
-            raw_file_data = data;
-            console.log(data);
-            to_load_data['source_path'] = data['url'];
-            front_data = {
-                'ID': data['_id'],
-                'Name': data['name'],
-                'Size': data['size'],
-            }
-            let file_info_div = document.getElementById('file_info-div');
-            let file_info_ul = file_info_div.querySelector('ul');
-
-            // Limpiar la lista
-            while (file_info_ul.firstChild) {
-                file_info_ul.removeChild(file_info_ul.firstChild);
-            }
-            for (let key in front_data) {
-                let li = document.createElement('li');
-                li.innerHTML = '<strong>' + key + '</strong>: ' + front_data[key];
-                file_info_ul.appendChild(li);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function confirm_file_info() {
-    let file_id = raw_file_data['_id'];
-    fetch('/mongodb/get_document_by_id/' + file_id, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-        .then(response => response.json())
-        .then(data => {
-            let encodedPath = encodeUrlParam(data['s3']['path']);
-            console.log(encodedPath);
-            fetch('/s3/download_from_path/' + encodedPath, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            })
-                .then(response => response.json())
-                .then(data => {
-                    // Aquí puedes agregar lógica para manejar la respuesta
-                    let file_ul = document.getElementById('file_list-ul')
-                    const style = window.getComputedStyle(document.getElementById('file_list-div'));
-                    const totalHeight = document.getElementById('file_list-div').clientHeight;
-                    const paddingTop = parseFloat(style.paddingTop);
-                    const paddingBottom = parseFloat(style.paddingBottom);
-                    const freeHeight = totalHeight - paddingTop - paddingBottom - 53 - 50;
-                    // const freeHeight = 200;
-                    document.getElementById('file_list-ul').style.height = freeHeight + 'px';
-                    for (let filename of data['files']) {
-                        let li = document.createElement('li');
-                        let radio_button = document.createElement('input');
-                        radio_button.type = 'radio';
-                        radio_button.name = 'file';
-                        radio_button.value = filename;
-
-                        // Crear una etiqueta para el radio button
-                        let label = document.createElement('label');
-                        label.appendChild(radio_button);
-                        label.appendChild(document.createTextNode(filename));
-                        li.appendChild(label);
-                        file_ul.appendChild(li);
-                    }
-                    handling_data['file_count'] = data['files'].length;
-                    set_status_div_children('disable', 'file_info_btns-div', ['skip-btn', 'fix-btn']);
-                    update_steps('file', 'done');
-                    set_status_div_children('enable', 'file_list_btn-div', ['confirm_model-btn']);
-                })
-
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-            update_steps('file', 'error');
-        });
-}
-
 function skip() {
     load_model_visor('batman.stl')
 }
@@ -534,18 +584,46 @@ function fix() {
     }
 }
 
-function load_3d_model() {
-    const selectedRadio = document.querySelector('input[name="file"]:checked');
-    if (selectedRadio) {
-        const selectedFilename = selectedRadio.value;
-        load_model_visor(selectedFilename)
-            .then(height_cm => {
-                to_load_data['file_details']['original_name'] = selectedFilename;
-                to_load_data['model_details']['height_cm'] = height_cm;
-                document.getElementById('load_model-btn').textContent = 'Reload model';
-                set_status_div_children('enable', 'file_list_btn-div', []);
-            })
+window.print_add_problems = function () {
+    let problem = prompt("Please enter the print problems");
+    problem = problem == null || problem == "" ? false : encodeUrlParam(problem);
+    if (!problem) {
+        alert('print problem cancelled');
+        return;
     } else {
-        alert('Por favor selecciona un archivo');
+        to_load_data['print']['problems'] = problem;
+    }
+}
+
+window.print_add_notes = function () {
+    let notes = prompt("Please enter the print notes");
+    notes = notes == null || notes == "" ? false : encodeUrlParam(notes);
+    if (!notes) {
+        alert('print notes cancelled');
+        return;
+    } else {
+        to_load_data['print']['notes'] = notes;
+    }
+}
+
+window.model_add_problems = function () {
+    let problem = prompt("Please enter the model problems");
+    problem = problem == null || problem == "" ? false : encodeUrlParam(problem);
+    if (!problem) {
+        alert('Model problem cancelled');
+        return;
+    } else {
+        to_load_data['model']['problems'] = problem;
+    }
+}
+
+window.model_add_notes = function () {
+    let notes = prompt("Please enter the model notes");
+    notes = notes == null || notes == "" ? false : encodeUrlParam(notes);
+    if (!notes) {
+        alert('model notes cancelled');
+        return;
+    } else {
+        to_load_data['model']['notes'] = notes;
     }
 }
