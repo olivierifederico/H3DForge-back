@@ -3,19 +3,27 @@ import { encodeUrlParam, load_model_visor, capitalize_first_letter } from "./uti
 document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('load-btn').addEventListener('click', get_file);
     document.getElementById('confirm_file_info-btn').addEventListener('click', confirm_file_info);
-    document.getElementById('skip-btn').addEventListener('click', skip);
-    document.getElementById('fix-btn').addEventListener('click', fix);
+    document.getElementById('skip-btn').addEventListener('click', other);
+    document.getElementById('fix-btn').addEventListener('click', monster);
+    document.getElementById('part-btn').addEventListener('click', sub_category_part);
+    document.getElementById('terrain-btn').addEventListener('click', sub_category_terrain);
     document.getElementById('load_model-btn').addEventListener('click', load_3d_model);
     document.getElementById('category-select').addEventListener('change', category_select);
-    document.getElementById('select_category-btn').addEventListener('click', load_form);
+    document.getElementById('select_category-btn').addEventListener('click', load_category);
     document.getElementById('select_source_ext-btn').addEventListener('click', confirm_source);
     document.getElementById('source-select').addEventListener('change', update_source_data);
     document.getElementById('test-btn').addEventListener('click', test_function);
     document.getElementById('confirm_model-btn').addEventListener('click', confirm_file_list);
+    document.getElementById('confirm_category-btn').addEventListener('click', confirm_category);
+    document.getElementById('confirm_form-btn').addEventListener('click', confirm_form);
 });
 
-
 let sources, categories, sub_categories, raw_file_data, front_data;
+
+let categories_data = {
+    'category': {},
+    'sub_category': {}
+}
 
 
 let to_load_data = {
@@ -28,6 +36,11 @@ let handling_data = {
     'extension': false,
     'print': false,
     'file_count': 0,
+    'form_keys': {
+        'model': [],
+        'print': [],
+        'file': [],
+    }
 }
 
 let steps = {
@@ -96,7 +109,14 @@ function init_page() {
         .then(response => response.json())
         .then(data => {
             categories = data['categories'];
+            for (let category of categories) {
+                categories_data
+                categories_data['category'][category['id']] = category['_id'];
+            }
             sub_categories = data['sub_categories'];
+            for (let sub_category of sub_categories) {
+                categories_data['sub_category'][sub_category['id']] = sub_category['_id']
+            }
             let category_select = document.getElementById('category-select');
             for (let category of categories) {
                 let option = document.createElement('option');
@@ -114,8 +134,11 @@ function init_page() {
         .then(() => {
             set_base_data();
             update_steps('source', 'in progress');
-            disable_all();
+            set_status_all();
             set_status_div_children('enable', 'source-div', ['load-btn', 'skip-btn', 'fix-btn']);
+
+            set_status_all('enable', 'form-container')
+            set_status_all('enable', 'category-div')
         })
 }
 
@@ -129,6 +152,11 @@ function set_base_data() {
         'extension': false,
         'print': false,
         'file_count': 0,
+        'form_keys': {
+            'model': [],
+            'print': [],
+            'file': [],
+        }
     };
     steps = {
         'init': 'done',
@@ -151,7 +179,9 @@ function confirm_source() {
         handling_data['extension'] = extension;
         update_steps('source', 'done');
         update_steps('file', 'in progress');
-        set_status_div_children('enable', 'file_info_btns-div', ['confirm_file_info-btn', 'skip-btn', 'fix-btn']);
+        // set_status_div_children('enable', 'file_info_btns-div', ['confirm_file_info-btn', 'skip-btn', 'fix-btn', 'part-btn']);
+        // set_status_all('enable', 'file_info_btns-div');
+        set_status_div_children('disable', 'file_info_btns-div', ['load-btn']);
     } else {
         set_status_div_children('enable', 'source-div', ['select_source_ext-btn']);
         button.textContent = 'Confirm';
@@ -190,7 +220,7 @@ function update_source_data() {
 }
 
 function get_file() {
-    set_status_div_children('disable', 'file_info_btns-div', ['skip-btn', 'fix-btn', 'confirm_file_info-btn']);
+    set_status_div_children('enable', 'file_info_btns-div', ['load-btn']);
     fetch('/mongodb/file_to_prepare/' + to_load_data['file_details']['source_id'] + '/' + encodeUrlParam(handling_data['extension']), {
         method: 'GET',
         headers: {
@@ -267,7 +297,8 @@ function confirm_file_info() {
                         file_ul.appendChild(li);
                     }
                     handling_data['file_count'] = data['files'].length;
-                    set_status_div_children('disable', 'file_info_btns-div', ['skip-btn', 'fix-btn']);
+                    // set_status_div_children('disable', 'file_info_btns-div', ['skip-btn', 'fix-btn']);
+
                     update_steps('file', 'done');
                     set_status_div_children('enable', 'file_list_btn-div', ['confirm_model-btn']);
                     update_steps('model 3D', 'in progress');
@@ -285,9 +316,9 @@ function load_3d_model() {
     if (selectedRadio) {
         const selectedFilename = selectedRadio.value;
         load_model_visor(selectedFilename)
-            .then(height_cm => {
+            .then(measures => {
                 to_load_data['file_details']['original_name'] = selectedFilename;
-                to_load_data['model_details']['height_cm'] = height_cm;
+                to_load_data['print_details']['measures'] = measures;
                 document.getElementById('load_model-btn').textContent = 'Reload model';
                 set_status_div_children('enable', 'file_list_btn-div', []);
             })
@@ -308,21 +339,25 @@ function confirm_file_list() {
         set_status_div_children('enable', 'file_list_btn-div', ['confirm_model-btn']);
         set_status_div_children('enable', 'category-container', [], 'selector-div');
         document.getElementById('select_category-btn').disabled = false;
-    }else {
+        set_status_all('disable', 'file_list-ul');
+    } else {
         set_status_div_children('disable', 'file_list_btn-div', ['confirm_model-btn']);
         document.getElementById('confirm_model-btn').textContent = 'Reset';
         document.getElementById('select_category-btn').disabled = true;
         update_steps('model 3D', 'ready');
         update_steps('category', 'ready');
+        set_status_all('enable', 'file_list-ul');
     }
 }
 
-function load_form() {
+function load_category() {
     let cat_select = document.getElementById('category-select');
     let sub_select = document.getElementById('sub_category-select');
     let cat_id = cat_select.value;
+    to_load_data['model_details']['category_id'] = categories_data['category'][cat_id];
     if (sub_select.value != 'null') {
         cat_id += '-' + sub_select.value;
+        to_load_data['model_details']['sub_category_id'] = categories_data['sub_category'][sub_select.value];
     }
     fetch('/mongodb/get_form/' + cat_id, {
         method: 'GET',
@@ -332,21 +367,95 @@ function load_form() {
     })
         .then(response => response.json())
         .then(data => {
+            handling_data['form_keys']['form_id'] = data['_id'];
             let model_fields = data['model_details'];
             let print_fields = data['print_details'];
-            generate_input_form('model_details-div', model_fields);
-            generate_input_form('print_details-div', print_fields);
+            generate_input_form('model_details-div', model_fields, 'model');
+            generate_input_form('print_details-div', print_fields, 'print');
+            set_status_div_children('enable', 'category_btn-div', []);
+            set_status_all('disable', 'form-container');
         })
         .catch((error) => {
             console.error('Error:', error);
         });
 }
 
+function confirm_category() {
+    update_steps('category', 'done');
+    update_steps('form', 'in progress');
+    set_status_div_children('disable', 'category_btn-div', []);
+    set_status_all('enable', 'form-div');
+}
 
-function disable_all() {
-    const elements = document.querySelectorAll('input, button, select, textarea');
+function confirm_form() {
+    for (let key of Object.keys(handling_data['form_keys'])) {
+        if (handling_data['form_keys'][key].length) {
+            for (let form_key of handling_data['form_keys'][key]) {
+                let form_elem = document.getElementById(form_key + '_form--input');
+                console.log('form_elem', form_elem);
+                if (form_elem.tagName == 'SELECT') {
+                    to_load_data[key + '_details'][form_key] = form_elem.value;
+                } else if (form_elem.tagName == 'INPUT') {
+                    to_load_data[key + '_details'][form_key] = form_elem.checked;
+                }
+            }
+        }
+    }
+
+}
+
+function add_item_to_db() {
+    let field_info = this.parentElement.id.split('_-_');
+    let key_field = field_info[0];
+    let detail_field = field_info[1].split('--')[0].split('-div')[0];
+    let new_option = prompt('Enter the new option for ' + key_field);
+    if (new_option == null || new_option == '') {
+        alert('Operation cancelled');
+        return;
+    }
+    if (confirm(
+        'Form_id: ' + handling_data['form_keys']['form_id'] + '\n' +
+        'Detail_field: ' + detail_field + '\n' +
+        'Key_field: ' + key_field + '\n' +
+        'New_option: ' + new_option)) {
+        console.log('a la verga pinche perro')
+        let new_option_encoded = encodeUrlParam(new_option);
+        console.log('new_option', new_option);
+        fetch('/mongodb/add_form_option/' + handling_data['form_keys']['form_id'] + '/' + detail_field + '/' + key_field + '/' + new_option_encoded, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('data', data);
+                let select_field = document.getElementById(key_field + '_form--input');
+                let option = document.createElement('option');
+                option.value = new_option;
+                option.text = new_option;
+                select_field.appendChild(option);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    } else {
+        alert('Operation cancelled');
+    }
+}
+
+function set_status_all(set = 'disable', div = null) {
+    let elements = document.querySelectorAll('input, button, select, textarea');
+    if (div) {
+        div = document.getElementById(div);
+        elements = div.querySelectorAll('input, button, select, textarea');
+    }
     elements.forEach(element => {
-        element.disabled = true;
+        if (set == 'enable') {
+            element.disabled = false;
+        } else if (set == 'disable') {
+            element.disabled = true;
+        }
     });
     document.getElementById('test-btn').disabled = false;
 }
@@ -386,7 +495,7 @@ function reset_to_source() {
         'category': 'ready',
         'form': 'ready',
     }
-    disable_all();
+    set_status_all();
     set_status_div_children('enable', 'source-div', ['load-btn', 'skip-btn', 'fix-btn']);
 }
 
@@ -413,7 +522,7 @@ function init_status_info() {
     }
 }
 
-function set_status_div_children(execution, div_id, except = [], div_class = null) {    
+function set_status_div_children(execution, div_id, except = [], div_class = null) {
     let div = document.getElementById(div_id);
     if (div_class) {
         let sub_divs = div.getElementsByClassName(div_class);
@@ -454,8 +563,7 @@ function set_status_div_children(execution, div_id, except = [], div_class = nul
     }
 }
 
-// CONTINUAR ACA, FALTA ACTIVAR EL CONFIRM
-function generate_input_form(div_id, fields) {
+function generate_input_form(div_id, fields, form_type) {
     let div = document.getElementById(div_id);
     for (let child of div.children) {
         if (child.tagName != 'UL') {
@@ -466,10 +574,12 @@ function generate_input_form(div_id, fields) {
     let button_div = document.createElement('div');
     button_div.className = 'btn-form';
     let key_list = Object.keys(fields);
-    console.log(key_list);
     let button_list = []
     ul.innerHTML = '';
     for (let key of key_list) {
+        if (key != 'notes' && key != 'problems') {
+            handling_data['form_keys'][form_type].push(key);
+        }
         let field = fields[key];
         let li = document.createElement('li');
         li.className = 'form-group';
@@ -484,15 +594,23 @@ function generate_input_form(div_id, fields) {
                 option_elem.textContent = option;
                 select_field.appendChild(option_elem);
             }
-            select_field.name = field['name'];
-            select_field.id = field['name'];
+            select_field.id = key + '_form--input';
+            let mini_div = document.createElement('div');
+            mini_div.id = key + '_-_' + div_id + '--db_field'
+            let button_add = document.createElement('button');
+            button_add.type = 'button';
+            button_add.textContent = 'Add';
+            button_add.className = 'btn btn-primary xmini-btn';
+            button_add.addEventListener('click', add_item_to_db)
             li.appendChild(label);
-            li.appendChild(select_field);
+            mini_div.appendChild(select_field);
+            mini_div.appendChild(button_add);
+            li.appendChild(mini_div);
         } else if (field['type'] == 'boolean') {
             let input_field = document.createElement('input');
             input_field.type = 'checkbox';
             input_field.name = key;
-            input_field.id = key;
+            input_field.id = key + '_form--input';
             li.appendChild(label);
             li.appendChild(input_field);
         } else if (field['type'] == 'button') {
@@ -500,7 +618,7 @@ function generate_input_form(div_id, fields) {
             button.type = 'button';
             button.textContent = capitalize_first_letter(key);
             button.id = key + '-btn';
-            button.className = 'btn btn-primary mini-btn';
+            button.className = 'btn btn-primary xmini-btn';
             button.addEventListener('click', () => {
                 let func = window[field['function']];
                 if (typeof func === 'function') {
@@ -510,7 +628,6 @@ function generate_input_form(div_id, fields) {
                 }
             });
             button_list.push(button);
-            // li.appendChild(button);
         }
         ul.appendChild(li);
     }
@@ -518,7 +635,6 @@ function generate_input_form(div_id, fields) {
         button_div.appendChild(button);
     }
     div.appendChild(button_div);
-
 }
 
 function category_select() {
@@ -554,11 +670,52 @@ function category_select() {
     }
 }
 
-function skip() {
-    load_model_visor('batman.stl')
+function sub_category_terrain() {
+    set_sub_category('terrain');
+}
+
+function sub_category_part() {
+    set_sub_category('part');
+}
+
+function other() {
+    set_sub_category('other');
+}
+
+function monster() {
+    set_sub_category('monster');
+}
+
+function set_sub_category(sub_category) {
+    fetch('/mongodb/set_sub_category/' + raw_file_data['_id'] + '/' + sub_category, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+        fetch('/s3/remove_local_files', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            get_file();
+            document.getElementById('file_list-ul').innerHTML = '';
+        })
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
 }
 
 function fix() {
+    // 66aa6e5a2ad0dc78c5ba2b91
     let file_id = raw_file_data['_id'];
     let reason = prompt("Please enter the reason for the fix");
     reason = reason == null || reason == "" ? false : encodeUrlParam(reason);

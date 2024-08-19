@@ -22,3 +22,12 @@ async def download_from_path(path: str = Path(..., title='Path to download')) ->
         
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+# remove local files
+@router.delete('/remove_local_files', tags=['S3'], status_code=200)
+async def remove_local_files() -> JSONResponse:
+    try:
+        utils.remove_local_files()
+        return JSONResponse(content={'message': 'Local files removed'})
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

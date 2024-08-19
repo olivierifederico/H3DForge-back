@@ -33,7 +33,8 @@ async def get_first_document(source_id:str, extension:str) -> dict:
         'source_data._id': source_id,
         'status.s3': True,
         'status.db': False,
-        'status.fix': {'$ne': True}
+        'status.fix': {'$ne': True},
+        'sub_category': {'$nin': ['monster', 'other', 'part', 'terrain']}
     }
     if extension != 'no_extension' or extension != 'any_extension':
         filter_query['extension'] = extension
@@ -45,6 +46,19 @@ async def get_first_document(source_id:str, extension:str) -> dict:
         ['source_data._id']
     )
     return document
+
+# add a new option to the document
+@router.put('/add_form_option/{id}/{detail_field}/{field}/{option}', tags=['MongoDB'], status_code=200)
+async def add_form_option(id: str, detail_field: str, field:str ,option: str) -> bool:
+    option = utils.decode_url_params(option)
+    response = await mongodb.add_form_option('h3dforge', 'forms', id, detail_field, field, option)
+    return response
+
+@router.put('/set_sub_category/{id}/{sub_category}', tags=['MongoDB'], status_code=200)
+async def set_model_type(id: str, sub_category: str) -> bool:
+    model_type = utils.decode_url_params(sub_category)
+    response = await mongodb.update_document('h3dforge', 'files','_id', id, {'sub_category': sub_category})
+    return response
 
 @router.put('/set_fix/{id}/{reason}', tags=['MongoDB'], status_code=200)
 async def set_fix(id: str, reason: str) -> bool:

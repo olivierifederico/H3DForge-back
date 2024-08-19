@@ -31,6 +31,16 @@ class MongoDBService(MongoDBConfig):
 
     async def insert_many_documents(self, documents: list, collection_name: str, db_name: str):
         await self.__client[f'{db_name}_{os.getenv('ENV')}'][collection_name].insert_many(documents)
+
+    async def add_form_option(self, db_name: str, collection_name: str, document_id: str, detail_field: str, field: str, option: str):
+        try:
+            collection = self.__client[f'{db_name}_{os.getenv('ENV')}'][collection_name]
+            full_field = f"{detail_field}.{field}.options"
+            response = await collection.update_one({'_id': ObjectId(document_id)}, {'$push': {full_field: option}})
+            response = response.raw_result
+            return True
+        except Exception as e:
+            raise ValueError(f"An error occurred while adding the option: {e}")
     
     async def get_documents(self, db_name: str, collection_name: str, query: dict = None, id_fields: list = []):
         try:

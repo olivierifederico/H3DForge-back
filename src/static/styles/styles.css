@@ -123,6 +123,11 @@ main {
     margin-top: 0px;
 }
 
+#form-div{
+    display: flex;
+    flex-direction: column;
+    row-gap: 20px;
+}
 
 #model_form-div {
     grid-area: file_data;
@@ -210,6 +215,12 @@ main {
 .selector-div select {
     border-radius: 5px;
     margin-left: 5px;
+}
+
+#form_btn-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
 }
 
 

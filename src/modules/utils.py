@@ -27,7 +27,6 @@ def convert_id_str(d, key):
         d[key] = str(d[key])
     return d
         
-
 def get_current_time():
     return now.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -154,3 +153,8 @@ def file_data(path: str, sub_folder:str , name:str, sub_folder_sku:str):
         'inserted_at': now.strftime('%Y-%m-%d %H:%M:%S')
     }
     return data
+
+def remove_local_files():
+    for root, dirs, files in os.walk(r'.\static\temp\files'):
+        for file in files:
+            os.remove(os.path.join(root, file))
