@@ -1,0 +1,379 @@
+$bg-color: #121212;
+$section-bg-color: #1E1E1E;
+
+$border-color: #00FF41;
+
+$font-color: #00FF41;
+$strong-color: #FFFFFF;
+
+$btn-bg-color: #00d636;
+$btn-font-color: #1E1E1E;
+$btn-border-color: #006118;
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body,
+html {
+    background-color: $bg-color;
+    font-family: 'Arial', sans-serif;
+    height: 100vh
+}
+
+#container {
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: 0.05fr 0.9fr 0.05fr;
+    grid-template-areas:
+        "header"
+        "main"
+        "footer";
+    height: 100vh;
+    width: 100vw;
+    color: $font-color;
+
+    header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        background-color: $section-bg-color;
+        border-bottom: 1px solid $border-color;
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        nav ul {
+            list-style-type: none;
+
+            li {
+                display: inline;
+                margin-right: 20px;
+
+                a {
+                    text-decoration: none;
+                    font-weight: bold;
+                    color: $font-color;
+                }
+
+                a:hover {
+                    text-decoration: underline;
+                }
+            }
+        }
+    }
+
+    main {
+        padding: 20px;
+        text-align: center;
+        height: 100%;
+
+    }
+
+    hr {
+        border: 1px solid $border-color;
+        margin: 20px 0;
+    }
+
+    button {
+        background-color: $btn-bg-color;
+        color: $btn-font-color;
+        /* Texto en color neón */
+        border: 2px solid $btn-border-color;
+        /* Borde en color neón */
+        border-radius: 5px;
+        padding: 5px 10px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: background-color 0.3s, color 0.3s, transform 0.3s;
+    }
+    button:hover, .button:hover {
+        background-color: $btn-font-color;
+        color: $border-color;
+        /* transform: scale(1.05); Aumenta ligeramente el tamaño */
+    }
+    
+    /* Botón cuando se hace clic (activo) */
+    button:active, .button:active {
+        background-color: #00CC33; /* Fondo neón más oscuro */
+        border-color: #00CC33;
+    }
+    
+    /* Botón cuando está deshabilitado */
+    button:disabled, .button:disabled {
+        background-color: #555555; /* Fondo gris oscuro */
+        color: #AAAAAA; /* Texto gris claro */
+        border-color: #555555;
+        cursor: not-allowed; /* Cursor no permitido */
+    }
+
+    .info_box {
+        background-color: $section-bg-color;
+        border: 1px solid $border-color;
+        text-align: left;
+        padding: 20px;
+        border-radius: 7px;
+        height: 100%;
+
+        h5 {
+            margin: 0 0 10px 0;
+            font-size: 1.2em;
+        }
+
+        ul {
+            list-style-type: none;
+
+            li {
+                font-size: 12px;
+
+                strong {
+                    color: $strong-color;
+                }
+            }
+        }
+
+    }
+
+    .row-btns {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+
+
+        button {
+            font-size: 0.7em;
+            padding: 2px 5px;
+            width: 100%;
+        }
+    }
+
+
+    .mini-btn {
+        border-radius: 5px;
+        font-size: 0.8em;
+        cursor: pointer;
+        padding: 4px 5px;
+        transition: background-color 0.3s, color 0.3s, transform 0.3s;
+        /* Transiciones suaves */
+    }
+
+    .xmini-btn {
+        border-radius: 5px;
+        // margin-left: 5px;
+        font-size: 0.5em;
+        cursor: pointer;
+        padding: 2px 5px;
+    }
+
+    .mid-mini-btn {
+        border-radius: 5px;
+        border: 1px solid #00FF41;
+        margin-left: 5px;
+        font-size: 0.6em;
+        cursor: pointer;
+        padding: 3px 5px;
+        transition: background-color 0.3s, color 0.3s, transform 0.3s;
+        /* Transiciones suaves */
+    }
+
+    .delete-btn {
+        background-color: #d30000;
+        color: #FFFFFF;
+        border: 1px solid #d30000;
+    }
+
+    .selector-div {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        select {
+            border-radius: 5px;
+            margin-left: 5px;
+        }
+    }
+
+    .margin-top-5 {
+        margin-top: 5px;
+    }
+
+    .margin-top-10 {
+        margin-top: 10px;
+    }
+
+    .margin-top-15 {
+        margin-top: 15px;
+    }
+
+    .margin-bottom-5 {
+        margin-bottom: 5px;
+    }
+
+    .margin-bottom-10 {
+        margin-bottom: 10px;
+    }
+
+    .margin-bottom-15 {
+        margin-bottom: 15px;
+    }
+    .grid-col-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 20px;
+    }
+
+    #raw_to_db-container {
+        height: 100%;
+        display: grid;
+        grid-template-columns: 0.22fr 0.39fr 0.39fr;
+        grid-template-rows: 0.25fr 0.33fr auto;
+        grid-gap: 20px;
+        grid-template-areas:
+            "raw_file file_data model_viewer"
+            "files_info file_data model_viewer"
+            "file_list file_data model_viewer";
+
+        #source-div {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: 0.4fr 0.4fr 0.2fr;
+            row-gap: 5px;
+
+            div {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+        }
+
+        #raw_file-div {
+            grid-area: raw_file;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 1px solid $border-color;
+            // padding: 10px;
+            background-color: $section-bg-color;
+
+        }
+
+        #file_info-div {
+            grid-area: files_info;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #file_list-div {
+            grid-area: file_list;
+            display: flex;
+            flex-direction: column;
+
+            select {
+                width: 100%;
+            }
+
+        }
+
+        #category-div {
+            grid-area: category;
+
+            #category-container {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                // vertical-align: middle;
+            }
+        }
+
+        #model_form-div {
+            grid-area: file_data;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: 0.1fr 0.7fr auto;
+            row-gap: 20px;
+            grid-template-areas:
+                "category"
+                "model_form"
+                "final_info";
+
+            #form-container {
+                display: grid;
+                grid-template-areas:
+                    'model_form print_form';
+                grid-template-columns: 0.5fr 0.5fr;
+                column-gap: 20px;
+
+                ul li {
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: space-between;
+                }
+                label {
+                    font-size: 1.35em;
+                    display: inline-block;
+                }
+
+                #form-div {
+                    display: flex;
+                    flex-direction: column;
+                    row-gap: 20px;
+                }
+            }
+
+            #form_btn-div {
+                display: flex;
+                flex-direction: row;
+                justify-content: right;
+            }
+        }
+
+        #model_viewer-div {
+            grid-area: model_viewer;
+
+            canvas {
+                border-radius: 5px;
+            }
+        }
+
+        #raw_file-div,
+        #file_info-div,
+        #file_list-div,
+        #category-div {
+            height: 100%;
+            /* Asegúrate de que los elementos internos también tengan height 100% */
+        }
+
+    }
+
+    footer {
+        padding: 0 20px;
+        grid-area: footer;
+        background-color: $section-bg-color;
+        border-top: 1px solid $border-color;
+        // height: 100%;
+    }
+
+    #status-div {
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+
+        ul {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            list-style-type: none;
+
+            li strong {
+                color: $strong-color;
+            }
+        }
+    }
+}

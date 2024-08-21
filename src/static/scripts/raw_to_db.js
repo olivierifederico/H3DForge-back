@@ -1,47 +1,30 @@
 import { encodeUrlParam, load_model_visor, capitalize_first_letter } from "./utils.js";
 
 document.addEventListener('DOMContentLoaded', (event) => {
-    document.getElementById('load-btn').addEventListener('click', get_file);
-    document.getElementById('confirm_file_info-btn').addEventListener('click', confirm_file_info);
-    document.getElementById('skip-btn').addEventListener('click', other);
-    document.getElementById('fix-btn').addEventListener('click', monster);
-    document.getElementById('part-btn').addEventListener('click', sub_category_part);
-    document.getElementById('terrain-btn').addEventListener('click', sub_category_terrain);
-    document.getElementById('load_model-btn').addEventListener('click', load_3d_model);
+    document.getElementById('get_raw_file-btn').addEventListener('click', get_raw_file);
+
     document.getElementById('category-select').addEventListener('change', category_select);
-    document.getElementById('select_category-btn').addEventListener('click', load_category);
-    document.getElementById('select_source_ext-btn').addEventListener('click', confirm_source);
+    document.getElementById('sub_category-select').addEventListener('change', load_category);
     document.getElementById('source-select').addEventListener('change', update_source_data);
-    document.getElementById('test-btn').addEventListener('click', test_function);
-    document.getElementById('confirm_model-btn').addEventListener('click', confirm_file_list);
-    document.getElementById('confirm_category-btn').addEventListener('click', confirm_category);
+    document.getElementById('folder-select').addEventListener('change', update_file_list);
+    document.getElementById('file-select').addEventListener('change', load_3d_model);
+
+    document.getElementById('switch_mode-btn').addEventListener('click', switch_mode);
+    document.getElementById('add_part-btn').addEventListener('click', add_part);
+
     document.getElementById('confirm_form-btn').addEventListener('click', confirm_form);
+
+    document.getElementById('test-btn').addEventListener('click', test_function);
+
 });
 
-let sources, categories, sub_categories, raw_file_data, front_data;
+let sources, categories, sub_categories, raw_file_data, front_data, to_load_data, handling_data;
 
 let categories_data = {
     'category': {},
     'sub_category': {}
 }
 
-
-let to_load_data = {
-    'model_details': {},
-    'print_details': {},
-    'file_details': {}
-};
-
-let handling_data = {
-    'extension': false,
-    'print': false,
-    'file_count': 0,
-    'form_keys': {
-        'model': [],
-        'print': [],
-        'file': [],
-    }
-}
 
 let steps = {
     'init': 'ready',
@@ -66,9 +49,10 @@ function test_function() {
 }
 
 init_page();
-
+// console.log('raw_to_db.js loaded');
 function init_page() {
     init_status_info();
+    set_base_data();
     let params = new URLSearchParams(
         {
             'database': 'h3dforge',
@@ -100,64 +84,45 @@ function init_page() {
         .then(() => {
             update_source_data();
         })
-    fetch('/mongodb/get_categories_data', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-        .then(response => response.json())
-        .then(data => {
-            categories = data['categories'];
-            for (let category of categories) {
-                categories_data
-                categories_data['category'][category['id']] = category['_id'];
-            }
-            sub_categories = data['sub_categories'];
-            for (let sub_category of sub_categories) {
-                categories_data['sub_category'][sub_category['id']] = sub_category['_id']
-            }
-            let category_select = document.getElementById('category-select');
-            for (let category of categories) {
-                let option = document.createElement('option');
-                option.value = category['id'];
-                option.text = category['name'];
-                category_select.appendChild(option);
-            }
-        })
+
         .then(() => {
-            category_select();
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        })
-        .then(() => {
-            set_base_data();
             update_steps('source', 'in progress');
             set_status_all();
-            set_status_div_children('enable', 'source-div', ['load-btn', 'skip-btn', 'fix-btn']);
+            set_status_all('enable', 'source-div');
 
-            set_status_all('enable', 'form-container')
-            set_status_all('enable', 'category-div')
+            // set_status_all('disable', 'form-container')
+            // set_status_all('enable', 'category-div')
         })
 }
 
 function set_base_data() {
+    to_load_data = {}
     to_load_data = {
         'model_details': {},
         'print_details': {},
         'file_details': {}
     };
+    handling_data = {}
     handling_data = {
         'extension': false,
         'print': false,
+        'file_mode': 'full',
         'file_count': 0,
         'form_keys': {
             'model': [],
             'print': [],
             'file': [],
-        }
+        },
+        files: {}
     };
+    steps = {
+        'init': 'ready',
+        'source': 'ready',
+        'file': 'ready',
+        'model 3D': 'ready',
+        'category': 'ready',
+        'form': 'ready',
+    }
     steps = {
         'init': 'done',
         'source': 'ready',
@@ -169,26 +134,15 @@ function set_base_data() {
 }
 
 function confirm_source() {
-    let button = document.getElementById('select_source_ext-btn');
-    if (steps['source'] == 'in progress') {
-        let source_id = document.getElementById('source-select').value;
-        let extension = document.getElementById('extension-select').value;
-        set_status_div_children('disable', 'source-div', ['select_source_ext-btn']);
-        button.textContent = 'Reset';
-        to_load_data['file_details']['source_id'] = source_id;
-        handling_data['extension'] = extension;
-        update_steps('source', 'done');
-        update_steps('file', 'in progress');
-        // set_status_div_children('enable', 'file_info_btns-div', ['confirm_file_info-btn', 'skip-btn', 'fix-btn', 'part-btn']);
-        // set_status_all('enable', 'file_info_btns-div');
-        set_status_div_children('disable', 'file_info_btns-div', ['load-btn']);
-    } else {
-        set_status_div_children('enable', 'source-div', ['select_source_ext-btn']);
-        button.textContent = 'Confirm';
-        reset_page_to_step('source');
-        update_steps('source', 'in progress');
-        update_steps('file', 'ready');
-    }
+    let source_id = document.getElementById('source-select').value;
+    let extension = document.getElementById('extension-select').value;
+    set_status_div_children('disable', 'source-div', ['select_source_ext-btn']);
+    // button.textContent = 'Reset';
+    to_load_data['file_details']['source_id'] = source_id;
+    handling_data['extension'] = extension;
+    update_steps('source', 'done');
+    update_steps('file', 'in progress');
+    // set_status_div_children('disable', 'file_info_btns-div', ['load-btn']);
 
 }
 
@@ -219,9 +173,14 @@ function update_source_data() {
     }
 }
 
-function get_file() {
-    set_status_div_children('enable', 'file_info_btns-div', ['load-btn']);
-    fetch('/mongodb/file_to_prepare/' + to_load_data['file_details']['source_id'] + '/' + encodeUrlParam(handling_data['extension']), {
+function get_raw_file() {
+    let source_id = document.getElementById('source-select').value;
+    let extension = document.getElementById('extension-select').value;
+    to_load_data['file_details']['source_id'] = source_id;
+    handling_data['extension'] = extension;
+    update_steps('source', 'done');
+    update_steps('file', 'in progress');
+    fetch('/mongodb/get_raw_file/' + source_id + '/' + encodeUrlParam(extension), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -231,41 +190,21 @@ function get_file() {
         .then(data => {
             raw_file_data = data;
             to_load_data['file_details']['source_path'] = data['url'];
-            front_data = {
+            let log_data = {
                 'ID': data['_id'],
                 'Name': data['name'],
                 'Size': data['size'],
             }
-            let file_info_div = document.getElementById('file_info-div');
-            let file_info_ul = file_info_div.querySelector('ul');
+            let file_info_ul = document.getElementById('file_info-ul');
 
-            // Limpiar la lista
-            while (file_info_ul.firstChild) {
-                file_info_ul.removeChild(file_info_ul.firstChild);
-            }
-            for (let key in front_data) {
+            file_info_ul.innerHTML = '';
+            for (let key in log_data) {
                 let li = document.createElement('li');
-                li.innerHTML = '<strong>' + key + '</strong>: ' + front_data[key];
+                li.innerHTML = '<strong>' + key + '</strong>: ' + log_data[key];
                 file_info_ul.appendChild(li);
             }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function confirm_file_info() {
-    let file_id = raw_file_data['_id'];
-    fetch('/mongodb/get_document_by_id/' + file_id, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-        .then(response => response.json())
-        .then(data => {
-            let encodedPath = encodeUrlParam(data['s3']['path']);
-            fetch('/s3/download_from_path/' + encodedPath, {
+            update_steps('file', 'done');
+            fetch('/s3/download_from_path/' + encodeUrlParam(data['s3']['path']), {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -273,59 +212,130 @@ function confirm_file_info() {
             })
                 .then(response => response.json())
                 .then(data => {
-                    // Aquí puedes agregar lógica para manejar la respuesta
-                    let file_ul = document.getElementById('file_list-ul')
-                    const style = window.getComputedStyle(document.getElementById('file_list-div'));
-                    const totalHeight = document.getElementById('file_list-div').clientHeight;
-                    const paddingTop = parseFloat(style.paddingTop);
-                    const paddingBottom = parseFloat(style.paddingBottom);
-                    const freeHeight = totalHeight - paddingTop - paddingBottom - 53 - 50;
-                    // const freeHeight = 200;
-                    document.getElementById('file_list-ul').style.height = freeHeight + 'px';
-                    for (let filename of data['files']) {
-                        let li = document.createElement('li');
-                        let radio_button = document.createElement('input');
-                        radio_button.type = 'radio';
-                        radio_button.name = 'file';
-                        radio_button.value = filename;
-
-                        // Crear una etiqueta para el radio button
-                        let label = document.createElement('label');
-                        label.appendChild(radio_button);
-                        label.appendChild(document.createTextNode(filename));
-                        li.appendChild(label);
-                        file_ul.appendChild(li);
+                    let file_select = document.getElementById('file-select');
+                    file_select.innerHTML = '';
+                    if (extension != '.stl') {
+                        fetch('/utils/extract_file/' + encodeUrlParam(data['files'][0]), {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                handling_data['files'] = data['folder_files'];
+                                set_status_all('enable', 'file_list-div');
+                                set_status_all('disable', 'part_btns-div');
+                                generate_file_list();
+                                update_file_list();
+                            })
+                        fetch('/mongodb/get_categories_data', {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                categories = data['categories'];
+                                for (let category of categories) {
+                                    categories_data
+                                    categories_data['category'][category['id']] = category['_id'];
+                                }
+                                sub_categories = data['sub_categories'];
+                                for (let sub_category of sub_categories) {
+                                    categories_data['sub_category'][sub_category['id']] = sub_category['_id']
+                                }
+                                let category_select = document.getElementById('category-select');
+                                for (let category of categories) {
+                                    let option = document.createElement('option');
+                                    option.value = category['id'];
+                                    option.text = category['name'];
+                                    category_select.appendChild(option);
+                                }
+                            })
+                            .then(() => {
+                                category_select();
+                            })
+                            .catch((error) => {
+                                console.error('Error:', error);
+                            })
                     }
-                    handling_data['file_count'] = data['files'].length;
-                    // set_status_div_children('disable', 'file_info_btns-div', ['skip-btn', 'fix-btn']);
-
-                    update_steps('file', 'done');
-                    set_status_div_children('enable', 'file_list_btn-div', ['confirm_model-btn']);
-                    update_steps('model 3D', 'in progress');
                 })
-
         })
         .catch((error) => {
             console.error('Error:', error);
-            update_steps('file', 'error');
         });
+
 }
 
-function load_3d_model() {
-    const selectedRadio = document.querySelector('input[name="file"]:checked');
-    if (selectedRadio) {
-        const selectedFilename = selectedRadio.value;
-        load_model_visor(selectedFilename)
-            .then(measures => {
-                to_load_data['file_details']['original_name'] = selectedFilename;
-                to_load_data['print_details']['measures'] = measures;
-                document.getElementById('load_model-btn').textContent = 'Reload model';
-                set_status_div_children('enable', 'file_list_btn-div', []);
-            })
-    } else {
-        alert('Por favor selecciona un archivo');
+function update_file_list() {
+    let folder_select = document.getElementById('folder-select');
+    let folder = folder_select.value;
+    let file_select = document.getElementById('file-select');
+    file_select.innerHTML = '';
+    for (let filename of handling_data['files']['file_data'][folder]['content']) {
+        let option = document.createElement('option');
+        option.value = filename;
+        option.text = filename;
+        file_select.appendChild(option);
+    }
+    load_3d_model();
+}
+
+function generate_file_list() {
+    let file_select = document.getElementById('file-select');
+    file_select.innerHTML = '';
+    let folder_select = document.getElementById('folder-select');
+    folder_select.innerHTML = '';
+    let file_list = handling_data['files']['file_data'];
+    for (let folder in file_list) {
+        let option = document.createElement('option');
+        option.value = folder;
+        option.text = folder;
+        folder_select.appendChild(option);
     }
 }
+
+
+function load_3d_model() {
+    let folder_selected = document.getElementById('folder-select').value;
+    let file_selected = document.getElementById('file-select').value;
+    let original_name = file_selected;
+    handling_data['file'] = file_selected;
+    if (file_selected) {
+        if (folder_selected != 'no_folder') {
+            file_selected = 'extracted/folders/' + folder_selected + '/' + file_selected;
+        }
+        load_model_visor(file_selected)
+            .then(measures => {
+                to_load_data['file_details']['original_name'] = original_name;
+                to_load_data['print_details']['measures'] = measures;
+            })
+    }
+}
+
+function switch_mode() {
+    let switch_mode_btn = document.getElementById('switch_mode-btn');
+    if (handling_data['file_mode'] == 'full') {
+        handling_data['file_mode'] = 'part';
+        switch_mode_btn.textContent = 'Switch to Full Mode';
+        set_status_all('enable', 'part-container');
+    } else if (handling_data['file_mode'] == 'part') {
+        handling_data['file_mode'] = 'full';
+        switch_mode_btn.textContent = 'Switch to Part Mode';
+        set_status_all('disable', 'part-container');
+    }
+}
+
+function add_part() {
+    let file_selected = document.getElementById('file-select').value;
+    let li = document.createElement('li');
+    li.textContent = file_selected;
+    document.getElementById('part_list-ul').appendChild(li);
+
+}
+
 
 function confirm_file_list() {
     if (steps['model 3D'] == 'in progress') {
@@ -372,8 +382,8 @@ function load_category() {
             let print_fields = data['print_details'];
             generate_input_form('model_details-div', model_fields, 'model');
             generate_input_form('print_details-div', print_fields, 'print');
-            set_status_div_children('enable', 'category_btn-div', []);
-            set_status_all('disable', 'form-container');
+            set_status_all('enable', 'model_form-div');
+            // set_status_all('disable', 'form-container');
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -384,15 +394,14 @@ function confirm_category() {
     update_steps('category', 'done');
     update_steps('form', 'in progress');
     set_status_div_children('disable', 'category_btn-div', []);
-    set_status_all('enable', 'form-div');
+    // set_status_all('enable', 'form-div');
 }
 
 function confirm_form() {
-    for (let key of Object.keys(handling_data['form_keys'])) {
+    for (let key of ['model','print', 'file']) {
         if (handling_data['form_keys'][key].length) {
             for (let form_key of handling_data['form_keys'][key]) {
                 let form_elem = document.getElementById(form_key + '_form--input');
-                console.log('form_elem', form_elem);
                 if (form_elem.tagName == 'SELECT') {
                     to_load_data[key + '_details'][form_key] = form_elem.value;
                 } else if (form_elem.tagName == 'INPUT') {
@@ -401,7 +410,6 @@ function confirm_form() {
             }
         }
     }
-
 }
 
 function add_item_to_db() {
@@ -582,7 +590,7 @@ function generate_input_form(div_id, fields, form_type) {
         }
         let field = fields[key];
         let li = document.createElement('li');
-        li.className = 'form-group';
+        li.className = 'form-group margin-bottom-5';
         let label = document.createElement('label');
         label.for = key;
         label.textContent = (capitalize_first_letter(key) + ':').replace(/_/g, ' ');
@@ -596,6 +604,7 @@ function generate_input_form(div_id, fields, form_type) {
             }
             select_field.id = key + '_form--input';
             let mini_div = document.createElement('div');
+            mini_div.className = 'selector-div';
             mini_div.id = key + '_-_' + div_id + '--db_field'
             let button_add = document.createElement('button');
             button_add.type = 'button';
@@ -629,12 +638,14 @@ function generate_input_form(div_id, fields, form_type) {
             });
             button_list.push(button);
         }
-        ul.appendChild(li);
+        if (field['type'] != 'button') {
+            ul.appendChild(li);
+        }
+        for (let button of button_list) {
+            button_div.appendChild(button);
+        }
+        div.appendChild(button_div);
     }
-    for (let button of button_list) {
-        button_div.appendChild(button);
-    }
-    div.appendChild(button_div);
 }
 
 function category_select() {
@@ -668,6 +679,7 @@ function category_select() {
         option.text = 'No subcategory';
         sub_select.appendChild(option);
     }
+    load_category();
 }
 
 function sub_category_terrain() {
@@ -693,25 +705,25 @@ function set_sub_category(sub_category) {
             'Content-Type': 'application/json',
         },
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Success:', data);
-        fetch('/s3/remove_local_files', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
         .then(response => response.json())
         .then(data => {
-            console.log(data);
-            get_file();
-            document.getElementById('file_list-ul').innerHTML = '';
+            console.log('Success:', data);
+            fetch('/s3/remove_local_files', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    get_file();
+                    document.getElementById('file_list-ul').innerHTML = '';
+                })
         })
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
+        .catch((error) => {
+            console.error('Error:', error);
+        });
 }
 
 function fix() {

@@ -32,20 +32,32 @@ header {
 }
 
 #source-div {
-    display: flex;
-    flex-direction: row;
-    justify-content: left;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.4fr 0.4fr 0.2fr;
+    grid-gap: 5px;
 }
 
-#source-div ul {
+#source-div div {
     display: flex;
     flex-direction: row;
-    list-style-type: none;
-
+    justify-content: space-between;
 }
 
-#source-div select{
-    margin-right: 5px;
+.row-btns {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.row-btns button {
+    border-radius: 5px;
+    border: 1px solid;
+    font-size: 0.7em;
+    cursor: pointer;
+    padding: 2px 5px;
+    width: 100%;
+    transition: background-color 0.3s, color 0.3s, transform 0.3s; /* Transiciones suaves */
 }
 
 header h1 {
@@ -84,13 +96,20 @@ main {
 #raw_to_db-container {
     display: grid;
     grid-template-columns: 0.22fr 1fr 1fr;
-    grid-template-rows: 0.3fr 1fr 0.2fr 0.05fr;
+    grid-template-rows: 0.1fr 0.3fr 0.3fr 1fr 0.05fr;
     grid-gap: 20px;
     grid-template-areas: 
+        'raw_file file_data model_viewer'
         "files_info file_data model_viewer"
         "file_list file_data model_viewer"
         "category file_data model_viewer"
         "status status status";
+}
+
+#raw_file-div {
+    grid-area: raw_file;
+    display: flex;
+    flex-direction: column;
 }
 
 #file_info-div {
@@ -103,6 +122,10 @@ main {
     grid-area: file_list;
     display: flex;
     flex-direction: column;
+}
+
+#file_list-div select{
+    width: 100%;
 }
 
 #file_list-ul {
@@ -121,6 +144,40 @@ main {
 
 #file_list-ul li label input{
     margin-top: 0px;
+}
+
+hr {
+    margin: 10px 0px;
+    border: 1px solid #00FF41;
+}
+
+.margin-top-5 {
+    margin-top: 5px;
+}
+
+.margin-top-10 {
+    margin-top: 10px;
+}
+
+.margin-top-15 {
+    margin-top: 15px;
+}
+
+.grid-col-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 20px;
+}
+
+.delete-btn {
+    background-color: #FF0000;
+    color: #FFFFFF;
+    border: 1px solid #FF0000;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s, transform 0.3s; /* Transiciones suaves */
 }
 
 #form-div{
@@ -208,8 +265,8 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: auto;
-    margin-bottom: auto;
+    /* margin-top: auto; */
+    /* margin-bottom: auto; */
 }
 
 .selector-div select {
@@ -259,7 +316,7 @@ main {
 }
 
 .info_box ul li {
-    margin: 5px 0;
+    /* margin: 5px 0; */
     color: #00FF41;
 }
 
@@ -281,12 +338,10 @@ main {
     list-style-type: none;
     display: flex;
     flex-direction: column;
-    padding: 0;
-    margin: 0;
 }
 
 .info_box ul li {
-    margin: 5px 5px;
+    margin: 2px 0px;
     color: #00FF41;
     font-size: 12px;
 }
@@ -313,16 +368,6 @@ main {
     margin-right: 5px;
 }
 
-button, .button {
-    background-color: #1E1E1E; /* Fondo oscuro */
-    color: #00FF41; /* Texto en color neón */
-    border: 2px solid #00FF41; /* Borde en color neón */
-    border-radius: 5px;
-    padding: 5px 10px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s, transform 0.3s; /* Transiciones suaves */
-}
 
 .mini-btn {
     border-radius: 5px;
@@ -351,12 +396,22 @@ button, .button {
     padding: 3px 5px;
     transition: background-color 0.3s, color 0.3s, transform 0.3s; /* Transiciones suaves */
 }
+button, .button {
+    background-color: #00d636; /* Fondo oscuro */
+    color: #1E1E1E; /* Texto en color neón */
+    border: 2px solid #006118; /* Borde en color neón */
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s, transform 0.3s; /* Transiciones suaves */
+}
 
 /* Estilo para botones cuando el cursor pasa sobre ellos */
 button:hover, .button:hover {
-    background-color: #00FF41; /* Fondo neón */
-    color: #1E1E1E; /* Texto oscuro */
-    transform: scale(1.05); /* Aumenta ligeramente el tamaño */
+    background-color: #1E1E1E; /* Fondo neón */
+    color: #00FF41; /* Texto oscuro */
+    /* transform: scale(1.05); Aumenta ligeramente el tamaño */
 }
 
 /* Botón cuando se hace clic (activo) */

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>H3DForge Back</title>
-    <link rel="stylesheet" type="text/css" href="static/styles/styles.css">
+    <link rel="stylesheet" type="text/css" href="static/styles/main.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/STLLoader.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js" defer></script>
@@ -15,13 +15,6 @@
 <body>
     <div id="container">
         <header>
-            <div id="source-div" class="selector-div">
-                <label for="source-select">Source:</label>
-                <select id="source-select" name="source"></select>
-                <label for='extension-select'>Extension:</label>
-                <select id='extension-select' name='extension'></select>
-                <button class="xmini-btn" id="select_source_ext-btn">Confirm</button>
-            </div>
             <button id="test-btn">Test</button>
             <nav>
                 <ul>
@@ -32,57 +25,71 @@
             </nav>
         </header>
         <main id="raw_to_db-container">
+            <div id="raw_file-div" class="info_box">
+                <div>
+                    <h5>Raw File</h5>
+                </div>
+                <div id="source-div" class="selector-div">
+                    <div>
+                        <label for="source-select">Source:</label>
+                        <select id="source-select" name="source"></select>
+                    </div>
+                    <div>
+                        <label for='extension-select'>Extension:</label>
+                        <select id='extension-select' name='extension'></select>
+                    </div>
+                    <div class="row-btns">
+                        <button id="get_raw_file-btn">Get Raw File</button>
+                    </div>
+                </div>
+            </div>
             <div id="file_info-div" class="info_box">
                 <div>
                     <h5>File info</h5>
                     <ul id="file_info-ul">
                     </ul>
                 </div>
-                <div class="btn-div" id="file_info_btns-div">
-                    <button class="mini-btn" id="load-btn">Load</button>
-                    <button class="mini-btn" id="confirm_file_info-btn">Confirm</button>
-                    <button class="mini-btn" id="skip-btn">Other</button>
-                    <button class="mini-btn" id="fix-btn">Monster</button>
-                    <button class="mini-btn" id="part-btn">Part</button>
-                    <button class="mini-btn" id="terrain-btn">Terrain</button>
-                </div>
             </div>
             <div id="file_list-div" class="info_box">
-                <div>
-                    <h5>Files</h5>
-                    <form id="file_form"></form>
-                    <ul id="file_list-ul">
+                <h5>File list</h5>
+                <div class="selector-div">
+                    <label for="folder-select">Folder:</label>
+                    <select id="folder-select" name="folder"></select>
+                </div>
+                <div class="selector-div margin-top-10">
+                    <label for="file-select">File:</label>
+                    <select id="file-select" name="file"></select>
+                </div>
+                <div class="row-btns margin-top-15">
+                    <button id="switch_mode-btn">Switch to Part Mode</button>
+                </div>
+                <hr>
+                <div class="part-mode" id="part-container">
+                    <div class="row-btns grid-col-2" id="part_btns-div">
+                        <button id="add_part-btn">Add Part</button>
+                        <button class="delete-btn" id="delete_part-btn">Delete Part</button>
+                    </div>
+                    <ul id="part_list-ul">
+
                     </ul>
                 </div>
-                <div class="btn-div" id="file_list_btn-div">
-                    <button class='mini-btn' id="load_model-btn">Load</button>
-                    <button class='mini-btn' id="confirm_model-btn">Confirm</button>
-                </div>
-            </div>
-            <div class="info_box" id="category-div">
-                <h5>Category info</h5>
-                <div id="category-container">
-                    <div class="selector-div">
-                        <label for="category-select">Category:</label>
-                        <select id="category-select" name="category">
-                            <option value="wh">WarHammer</option>
-                            <option value="sc">StarCraft</option>
-                        </select>
-                        <button class="xmini-btn">Add</button>
-                    </div>
-                    <div class="selector-div">
-                        <label for="sub_category-select">Sub Category:</label>
-                        <select id="sub_category-select" name="sub_category">
-                        </select>
-                        <button class="xmini-btn">Add</button>
-                    </div>
-                    <div id="category_btn-div">
-                        <button id="select_category-btn" class="mini-btn">Load Form</button>
-                        <button id="confirm_category-btn" class="mini-btn">Confirm</button>
-                    </div>
-                </div>
-            </div>
+            </div>          
             <div id="model_form-div">
+                <div class="info_box" id="category-div">
+                    <h5>Category info</h5>
+                    <div id="category-container">
+                        <div class="selector-div">
+                            <label for="category-select">Category:</label>
+                            <select id="category-select" name="category">
+                            </select>
+                        </div>
+                        <div class="selector-div">
+                            <label for="sub_category-select">Sub Category:</label>
+                            <select id="sub_category-select" name="sub_category">
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 <div class="info_box" id="form-div">
                     <h5>Model info</h5>
                     <div id="form-container">
@@ -120,15 +127,16 @@
             </div>
             <div class="info_box" id="model_viewer-div">
             </div>
-
-            <div class="info_box" id="status-div">
-                <ul id="status-ul">
-
-                </ul>
-            </div>
         </main>
+        <footer>
+            <div id="status-div">
+                <ul id="status-ul">
+            
+                </ul>
+    
+            </div>
+        </footer>
     </div>
 </body>
-
 
 </html>

@@ -24,7 +24,7 @@ async def get_document_by_id(id: str) -> dict:
     document = await mongodb.get_document_by_id('h3dforge', 'files', id, ['source_data._id'])
     return document
 
-@router.get('/file_to_prepare/{source_id}/{extension}', tags=['MongoDB'], status_code=200)
+@router.get('/get_raw_file/{source_id}/{extension}', tags=['MongoDB'], status_code=200)
 async def get_first_document(source_id:str, extension:str) -> dict:
     extension = utils.decode_url_params(extension)
     print(source_id, extension)

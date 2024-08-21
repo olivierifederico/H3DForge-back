@@ -23,8 +23,8 @@ const paddingLateral = parseFloat(style.paddingLeft) + parseFloat(style.paddingR
 
 
 // Calcula el alto libre después de restar el padding
-const freeHeight = totalHeight - paddingTop - paddingBottom;
-const freeWidth = totalWidth - paddingLateral;
+const freeHeight = totalHeight - paddingTop - paddingBottom - 1;
+const freeWidth = totalWidth - paddingLateral - 1;
 
 function init() {
     scene = new THREE.Scene();

@@ -4,6 +4,10 @@ import mimetypes
 import re
 from datetime import datetime
 import urllib.parse
+import zipfile
+import rarfile
+import py7zr
+import json
 
 now = datetime.now()
 
@@ -158,3 +162,84 @@ def remove_local_files():
     for root, dirs, files in os.walk(r'.\static\temp\files'):
         for file in files:
             os.remove(os.path.join(root, file))
+
+
+def extract_file(file:str, root: bool = True):
+    if root:
+        base_path = r'.\static\temp\files'
+        path_to_extract = r'.\static\temp\files\extracted'
+    else:
+        base_path = r'.\static\temp\files\extracted'
+        path_to_extract = os.path.join(os.path.join(base_path, 'folders'), file)
+    file_path = os.path.join(base_path, file)
+    if not os.path.exists(base_path):
+        os.makedirs(base_path)
+    if not os.path.exists(path_to_extract):
+        os.makedirs(path_to_extract)
+    if file.endswith('.zip'):
+        with zipfile.ZipFile(file_path, 'r') as zip_ref:
+            zip_ref.extractall(path_to_extract)
+    elif file.endswith('.rar'):
+        with rarfile.RarFile(file_path, 'r') as rar_ref:
+            rar_ref.extractall(path_to_extract)
+    elif file.endswith('.7z'):
+        with py7zr.SevenZipFile(file_path, 'r') as sevenz_ref:
+            sevenz_ref.extractall(path_to_extract)
+    else:
+        return []
+    return get_files_from_path(path_to_extract)
+
+def save_json(data: dict, path: str):
+    with open(path, 'w') as f:
+        json.dump(data, f)
+    return True
+
+def load_json(path: str):
+    with open(path, 'r') as f:
+        data = json.load(f)
+    return data
+
+def extract_raw_file_data(file_name:str):
+        raw_file_data = {}
+        raw_file_data['original_file'] = file_name
+        raw_file_data['file_data'] = {}
+        files = extract_file(file_name, root=True)
+        if len(files) > 1:
+            for file in files:
+                if file.endswith('.zip') or file.endswith('.rar') or file.endswith('.7z'):
+                    raw_file_data['file_data'][file] = {}
+                    raw_file_data['file_data'][file]['content'] = extract_file(file, root=False)
+                    raw_file_data['file_data'][file]['status'] = 'extracted'
+        else:
+            raw_file_data['original_file'] = file_name
+            raw_file_data['file_data'][file_name] = {}
+            raw_file_data['file_data'][file_name]['content'] = files 
+            raw_file_data['file_data'][file_name]['status'] = 'extracted'
+
+        return raw_file_data
+
+def verify_files_raw_data_log(filename, log_path):
+    if not os.path.exists(log_path):
+        return False
+    else:
+        raw_file_data = load_json(log_path)
+        if filename != raw_file_data['original_file']:
+            return False
+        else:
+            if len(raw_file_data['file_data']) > 1:
+                extracted_path = os.path.join(os.getcwd(), 'static', 'temp', 'files', 'extracted', 'folders')
+                for file in raw_file_data['file_data'].keys():
+                    folder_path = os.path.join(extracted_path, file)
+                    if not os.path.exists(folder_path):
+                        return False
+                    else:
+                        for f in raw_file_data['file_data'][file]['content']:
+                            if not os.path.exists(os.path.join(folder_path, f)):
+                                return False
+            else:
+                folder_path = os.path.join(os.getcwd(), 'static', 'temp', 'files', 'extracted')
+                for f in raw_file_data['file_data'][filename]['content']:
+                    if not os.path.exists(os.path.join(folder_path, f)):
+                        return False
+            return raw_file_data
+                
