@@ -107,6 +107,7 @@ function set_base_data() {
         'extension': false,
         'print': false,
         'file_mode': 'full',
+        'files_part': {},
         'file_count': 0,
         'form_keys': {
             'model': [],
@@ -297,10 +298,18 @@ function generate_file_list() {
     }
 }
 
-
 function load_3d_model() {
     let folder_selected = document.getElementById('folder-select').value;
     let file_selected = document.getElementById('file-select').value;
+    if (handling_data['file_mode'] == 'part') {
+        if (check_if_part_exists(file_selected)) {
+            console.log(handling_data['file_mode']);
+                document.getElementById('add_part-btn').disabled = true;
+        } else {
+            document.getElementById('add_part-btn').disabled = false;
+        }
+    }
+
     let original_name = file_selected;
     handling_data['file'] = file_selected;
     if (file_selected) {
@@ -329,11 +338,80 @@ function switch_mode() {
 }
 
 function add_part() {
+    let folder_selected = document.getElementById('folder-select').value;
     let file_selected = document.getElementById('file-select').value;
-    let li = document.createElement('li');
-    li.textContent = file_selected;
-    document.getElementById('part_list-ul').appendChild(li);
+    document.getElementById('add_part-btn').disabled = true;
+    if (check_if_part_exists(file_selected)) {
+        console.log('Part already exists');
+        return;
+    } else {
 
+        let key_list = Object.keys(handling_data['files_part']);
+        if (key_list.includes(folder_selected)) {
+            let folder_li = document.getElementById('folder_' + folder_selected);
+            let sub_file_list = folder_li.querySelector('ul');
+            let li_sub = document.createElement('li');
+            li_sub.id = 'file_'+file_selected;
+            let checkbox_sub = document.createElement('input');
+            let label_sub = document.createElement('label');
+            checkbox_sub.type = 'checkbox';
+            checkbox_sub.name = 'part';
+            checkbox_sub.value = 'file_'+file_selected;
+            label_sub.for = 'file_'+file_selected;
+            label_sub.textContent = file_selected;
+            li_sub.appendChild(checkbox_sub);
+            li_sub.appendChild(label_sub);
+            sub_file_list.appendChild(li_sub);
+            handling_data.files_part[folder_selected].push(file_selected);
+
+        }
+        else{
+            let li = document.createElement('li');
+            li.className = 'file_list_folder';
+            let folder_div = document.createElement('div');
+            // folder_div.className = 'file_list_folder';
+            li.id = 'folder_'+folder_selected;
+            let checkbox = document.createElement('input');
+            let label = document.createElement('label');
+            let sub_file_list = document.createElement('ul');
+            checkbox.type = 'checkbox';
+            checkbox.name = 'folder';
+            checkbox.value = 'folder_'+folder_selected;
+            label.for = 'folder_'+folder_selected;
+            label.textContent = folder_selected;
+            folder_div.appendChild(checkbox);
+            folder_div.appendChild(label);
+            li.appendChild(folder_div);
+            document.getElementById('part_list-ul').appendChild(li);
+            let li_sub = document.createElement('li');
+            li_sub.id = 'file_'+file_selected;
+            let checkbox_sub = document.createElement('input');
+            let label_sub = document.createElement('label');
+            checkbox_sub.type = 'checkbox';
+            checkbox_sub.name = 'part';
+            checkbox_sub.value = 'file_'+file_selected;
+            label_sub.for = 'file_'+file_selected;
+            label_sub.textContent = file_selected;
+            li_sub.appendChild(checkbox_sub);
+            li_sub.appendChild(label_sub);
+            sub_file_list.appendChild(li_sub);
+            li.appendChild(sub_file_list);
+
+            handling_data['files_part'][folder_selected] = []
+            handling_data.files_part[folder_selected].push(file_selected);
+        }
+    }
+}
+
+function check_if_part_exists(part) {
+    let part_list = document.getElementById('part_list-ul');
+    let parts = part_list.querySelectorAll('input[name="part"]');
+    for (let part_elem of parts) {
+        if (part_elem.value == part) {
+            return true;
+        }
+    }
+    return false;
 }
 
 
@@ -398,7 +476,7 @@ function confirm_category() {
 }
 
 function confirm_form() {
-    for (let key of ['model','print', 'file']) {
+    for (let key of ['model', 'print', 'file']) {
         if (handling_data['form_keys'][key].length) {
             for (let form_key of handling_data['form_keys'][key]) {
                 let form_elem = document.getElementById(form_key + '_form--input');
@@ -595,6 +673,7 @@ function generate_input_form(div_id, fields, form_type) {
         label.for = key;
         label.textContent = (capitalize_first_letter(key) + ':').replace(/_/g, ' ');
         let select_field = document.createElement('select');
+        select_field.id = key + '_form--input';
         if ('options' in field) {
             for (let option of field['options']) {
                 let option_elem = document.createElement('option');
@@ -602,7 +681,7 @@ function generate_input_form(div_id, fields, form_type) {
                 option_elem.textContent = option;
                 select_field.appendChild(option_elem);
             }
-            select_field.id = key + '_form--input';
+            li.appendChild(label);
             let mini_div = document.createElement('div');
             mini_div.className = 'selector-div';
             mini_div.id = key + '_-_' + div_id + '--db_field'
@@ -611,10 +690,12 @@ function generate_input_form(div_id, fields, form_type) {
             button_add.textContent = 'Add';
             button_add.className = 'btn btn-primary xmini-btn';
             button_add.addEventListener('click', add_item_to_db)
-            li.appendChild(label);
             mini_div.appendChild(select_field);
             mini_div.appendChild(button_add);
             li.appendChild(mini_div);
+            if (key == 'complexity' || key == 'quality') {
+                button_add.style.display = 'none';
+            }
         } else if (field['type'] == 'boolean') {
             let input_field = document.createElement('input');
             input_field.type = 'checkbox';

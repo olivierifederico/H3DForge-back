@@ -1,5 +1,6 @@
 $bg-color: #121212;
 $section-bg-color: #1E1E1E;
+$bg-in-info_box: #273626;
 
 $border-color: #00FF41;
 
@@ -153,7 +154,6 @@ html {
         }
     }
 
-
     .mini-btn {
         border-radius: 5px;
         font-size: 0.8em;
@@ -227,12 +227,48 @@ html {
         grid-template-columns: 1fr 1fr;
         column-gap: 20px;
     }
+    .file_list_folder {
+        display: grid;
+        grid-template-columns: 0.1fr;
+        grid-template-rows: 1fr auto;
+        margin-bottom: 15px;
+        div {
+            display: flex;
+            flex-direction: row;
+            justify-content: left;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1em;
+            margin-bottom: 4px;
+        }
+        ul {
+            list-style-type: square;
+            li{
+            display: flex;
+            flex-direction: row;
+            justify-content: left;
+            align-items: center;
+            margin-left:15px;
+            color: $strong-color;
+            font-size: 0.9em;
+        }}
+    }
+
+    .flex-row {
+        display: flex;
+        flex-direction: row;
+        justify-content: left;
+
+        input {
+            margin-right: 5px;
+        }
+    }
 
     #raw_to_db-container {
         height: 100%;
         display: grid;
         grid-template-columns: 0.22fr 0.39fr 0.39fr;
-        grid-template-rows: 0.25fr 0.33fr auto;
+        grid-template-rows: 0.20fr 0.16fr 0.64fr;
         grid-gap: 20px;
         grid-template-areas:
             "raw_file file_data model_viewer"
@@ -277,7 +313,23 @@ html {
             select {
                 width: 100%;
             }
-
+        }
+        #part-container {
+            display:grid;
+            height: 100%;
+            row-gap: 20px;
+            grid-template-columns: 1fr;
+            grid-template-rows: 0.1fr 0.9fr;
+            grid-template-areas: 
+                "handlers"
+                "file_list";
+            #bg-in {
+                    background-color: $bg-in-info_box;
+                    // border: 1px solid $border-color;
+                    padding: 10px;
+                    border-radius: 7px;
+                    height: 100%;
+                }
         }
 
         #category-div {

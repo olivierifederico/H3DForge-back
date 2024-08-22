@@ -179,11 +179,46 @@ html {
   -moz-column-gap: 20px;
        column-gap: 20px;
 }
+#container .file_list_folder {
+  display: grid;
+  grid-template-columns: 0.1fr;
+  grid-template-rows: 1fr auto;
+  margin-bottom: 15px;
+}
+#container .file_list_folder div {
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1em;
+  margin-bottom: 4px;
+}
+#container .file_list_folder ul {
+  list-style-type: square;
+}
+#container .file_list_folder ul li {
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  align-items: center;
+  margin-left: 15px;
+  color: #FFFFFF;
+  font-size: 0.9em;
+}
+#container .flex-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+}
+#container .flex-row input {
+  margin-right: 5px;
+}
 #container #raw_to_db-container {
   height: 100%;
   display: grid;
   grid-template-columns: 0.22fr 0.39fr 0.39fr;
-  grid-template-rows: 0.25fr 0.33fr auto;
+  grid-template-rows: 0.2fr 0.16fr 0.64fr;
   grid-gap: 20px;
   grid-template-areas: "raw_file file_data model_viewer" "files_info file_data model_viewer" "file_list file_data model_viewer";
 }
@@ -218,6 +253,20 @@ html {
 }
 #container #raw_to_db-container #file_list-div select {
   width: 100%;
+}
+#container #raw_to_db-container #part-container {
+  display: grid;
+  height: 100%;
+  row-gap: 20px;
+  grid-template-columns: 1fr;
+  grid-template-rows: 0.1fr 0.9fr;
+  grid-template-areas: "handlers" "file_list";
+}
+#container #raw_to_db-container #part-container #bg-in {
+  background-color: #273626;
+  padding: 10px;
+  border-radius: 7px;
+  height: 100%;
 }
 #container #raw_to_db-container #category-div {
   grid-area: category;
