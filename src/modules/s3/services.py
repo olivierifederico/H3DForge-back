@@ -8,9 +8,9 @@ class S3Service(S3Config):
         super().__init__()
         self.__client = self.create_client()
 
-    def download_from_path(self, bucket:str, path:str):
+    def download_from_path(self, bucket:str, path:str, temp_path: str):
         try:
-            temp_path = os.path.join(os.getcwd(), 'static/temp/files/')
+            temp_path = os.path.join(os.getcwd(), temp_path)
             filename = path.split('/')[-1]
             file_path = f"{temp_path}{filename}"
             if os.path.exists(file_path):

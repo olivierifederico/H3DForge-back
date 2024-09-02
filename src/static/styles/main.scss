@@ -1,16 +1,17 @@
-$bg-color: #121212;
-$section-bg-color: #1E1E1E;
-$bg-in-info_box: #273626;
+$bg-color: #121212;  // Fondo oscuro permanece igual
+$section-bg-color: #1E1E1E;  // Fondo de sección oscuro permanece igual
+$bg-in-info_box: #2A1F1B;  // Cambiado a un tono marrón oscuro para reflejar una atmósfera de forja
 
-$border-color: #00FF41;
+$border-color: #FF4500;  // Cambiado a un naranja fuerte que simula el brillo del metal caliente
 
-$font-color: #00FF41;
-$strong-color: #FFFFFF;
+$font-color: #FFA500;  // Cambiado a un tono anaranjado brillante, similar al metal al rojo vivo
+$strong-color: #FFD700;  // Cambiado a dorado para acentuar los textos destacados
 
-$btn-bg-color: #00d636;
-$btn-font-color: #1E1E1E;
-$btn-border-color: #006118;
-
+$btn-bg-color: #FF8C00;  // Cambiado a un tono naranja oscuro para los botones
+$btn-font-color: #1E1E1E;  // Color de fuente en botones permanece oscuro para contraste
+$btn-border-color: #B22222;  // Cambiado a un rojo más profundo para reflejar calor y metal candente
+$info-box-font-color-1: #D4A373; 
+$info-box-font-color-2: #B28A68;
 
 * {
     margin: 0;
@@ -22,7 +23,8 @@ body,
 html {
     background-color: $bg-color;
     font-family: 'Arial', sans-serif;
-    height: 100vh
+    height: 100vh;
+    overflow: hidden;
 }
 
 #container {
@@ -82,6 +84,37 @@ html {
         margin: 20px 0;
     }
 
+    input[type="checkbox"] {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 2px solid $border-color;
+        background-color: transparent;
+        border-radius: 4px;
+        transition: background-color 0.3s, border-color 0.3s;
+
+        &:checked {
+            background-color: $btn-bg-color;
+            border-color: $strong-color;
+        }
+
+        &:hover {
+            border-color: $btn-border-color;
+        }
+
+        &:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px $font-color;
+        }
+
+    }
+    label{
+        color: $info-box-font-color-1;
+    }
+
     button {
         background-color: $btn-bg-color;
         color: $btn-font-color;
@@ -139,6 +172,13 @@ html {
             }
         }
 
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .row-btns {
@@ -227,6 +267,19 @@ html {
         grid-template-columns: 1fr 1fr;
         column-gap: 20px;
     }
+
+    .grid-col-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        column-gap: 20px;
+    }
+
+    .grid-col-4 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        column-gap: 20px;
+    }
+
     .file_list_folder {
         display: grid;
         grid-template-columns: 0.1fr;
@@ -237,6 +290,7 @@ html {
             flex-direction: row;
             justify-content: left;
             align-items: center;
+            color: $info-box-font-color-1;
             font-weight: bold;
             font-size: 1em;
             margin-bottom: 4px;
@@ -249,7 +303,7 @@ html {
             justify-content: left;
             align-items: center;
             margin-left:15px;
-            color: $strong-color;
+            color: $info-box-font-color-2;
             font-size: 0.9em;
         }}
     }
@@ -268,7 +322,7 @@ html {
         height: 100%;
         display: grid;
         grid-template-columns: 0.22fr 0.39fr 0.39fr;
-        grid-template-rows: 0.20fr 0.16fr 0.64fr;
+        grid-template-rows: 0.20fr 0.18fr 0.62fr;
         grid-gap: 20px;
         grid-template-areas:
             "raw_file file_data model_viewer"
@@ -326,7 +380,7 @@ html {
             #bg-in {
                     background-color: $bg-in-info_box;
                     // border: 1px solid $border-color;
-                    padding: 10px;
+                    padding: 20px;
                     border-radius: 7px;
                     height: 100%;
                 }
@@ -376,6 +430,7 @@ html {
                     flex-direction: column;
                     row-gap: 20px;
                 }
+                // #final-div {}
             }
 
             #form_btn-div {
@@ -387,6 +442,13 @@ html {
 
         #model_viewer-div {
             grid-area: model_viewer;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 0.01fr;
+            row-gap: 10px;
+            grid-template-areas:
+                "model_viewer"
+                "handlers";
 
             canvas {
                 border-radius: 5px;
@@ -427,5 +489,12 @@ html {
                 color: $strong-color;
             }
         }
+    }
+    #second_viewer {
+        visibility: hidden; /* O puedes usar opacity: 0; */
+        position:absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
     }
 }

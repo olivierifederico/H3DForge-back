@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/STLLoader.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js" defer></script>
     <script type="module" src="static/scripts/raw_to_db.js" defer></script>
 </head>
 
@@ -49,6 +50,13 @@
                     <ul id="file_info-ul">
                     </ul>
                 </div>
+                <div id="info_handlers" class="row-btns grid-col-4">
+                    <button id="skip_monster-btn" class="xmini-btn">Monster</button>
+                    <button id="skip_terrain-btn" class="xmini-btn">Terrain</button>
+                    <button id="skip_other-btn" class="xmini-btn">Other</button>
+                    <button id="skip_part-btn" class="xmini-btn">Part</button>
+
+                </div>
             </div>
             <div id="file_list-div" class="info_box">
                 <h5>File list</h5>
@@ -74,7 +82,7 @@
                         </ul>
                     </div>
                 </div>
-            </div>          
+            </div>
             <div id="model_form-div">
                 <div class="info_box" id="category-div">
                     <h5>Category info</h5>
@@ -109,24 +117,16 @@
                 </div>
                 <div class="info_box" id="final-div">
                     <h5>Final info</h5>
-                    <div id="model_info_final-div">
-                        <h6>Model info</h6>
-                        <ul>
-                        </ul>
-                    </div>
-                    <div id="print_info_final-div">
-                        <h6>Print info</h6>
-                        <ul>
-                        </ul>
-                    </div>
-                    <div id="file_info_final-div">
-                        <h6>File info</h6>
-                        <ul>
-                        </ul>
-                    </div>
                 </div>
             </div>
+
             <div class="info_box" id="model_viewer-div">
+                <div id="principal_viewer">
+                </div>
+                <div id="handlers" class="row-btns grid-col-2">
+                    <button id="reset_model-btn" class="xmini-btn">Reset View</button>
+                    <button id="capture_model-btn" class="xmini-btn">Capture Model</button>
+                </div>
             </div>
         </main>
         <footer>
@@ -137,6 +137,7 @@
     
             </div>
         </footer>
+        <div id="second_viewer"></div>
     </div>
 </body>
 

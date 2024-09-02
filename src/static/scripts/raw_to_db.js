@@ -1,7 +1,12 @@
-import { encodeUrlParam, load_model_visor, capitalize_first_letter } from "./utils.js";
+import { encodeUrlParam, load_model_visor, save_capture, capitalize_first_letter } from "./utils.js";
 
 document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('get_raw_file-btn').addEventListener('click', get_raw_file);
+
+    document.getElementById('skip_terrain-btn').addEventListener('click', sub_category_terrain);
+    document.getElementById('skip_part-btn').addEventListener('click', sub_category_part);
+    document.getElementById('skip_other-btn').addEventListener('click', other);
+    document.getElementById('skip_monster-btn').addEventListener('click', monster);
 
     document.getElementById('category-select').addEventListener('change', category_select);
     document.getElementById('sub_category-select').addEventListener('change', load_category);
@@ -13,6 +18,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('add_part-btn').addEventListener('click', add_part);
 
     document.getElementById('confirm_form-btn').addEventListener('click', confirm_form);
+
+    document.getElementById('reset_model-btn').addEventListener('click', load_3d_model);
+    document.getElementById('capture_model-btn').addEventListener('click', upload_img);
 
     document.getElementById('test-btn').addEventListener('click', test_function);
 
@@ -205,7 +213,7 @@ function get_raw_file() {
                 file_info_ul.appendChild(li);
             }
             update_steps('file', 'done');
-            fetch('/s3/download_from_path/' + encodeUrlParam(data['s3']['path']), {
+            fetch('/s3/download_from_path/' + encodeUrlParam(data['s3']['path']) +'/' + encodeUrlParam(data['extension']), {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -257,6 +265,8 @@ function get_raw_file() {
                             })
                             .then(() => {
                                 category_select();
+                                set_status_all('enable', 'handlers');
+                                set_status_all('enable', 'info_handlers');
                             })
                             .catch((error) => {
                                 console.error('Error:', error);
@@ -304,7 +314,7 @@ function load_3d_model() {
     if (handling_data['file_mode'] == 'part') {
         if (check_if_part_exists(file_selected)) {
             console.log(handling_data['file_mode']);
-                document.getElementById('add_part-btn').disabled = true;
+            document.getElementById('add_part-btn').disabled = true;
         } else {
             document.getElementById('add_part-btn').disabled = false;
         }
@@ -326,14 +336,21 @@ function load_3d_model() {
 
 function switch_mode() {
     let switch_mode_btn = document.getElementById('switch_mode-btn');
+    let file_selected = document.getElementById('file-select').value;
     if (handling_data['file_mode'] == 'full') {
         handling_data['file_mode'] = 'part';
         switch_mode_btn.textContent = 'Switch to Full Mode';
+        // set_status_all('disable', 'model_form-div');
+        set_status_all('disable', 'part-container');
         set_status_all('enable', 'part-container');
+        if (check_if_part_exists(file_selected)) {
+            document.getElementById('add_part-btn').disabled = true;
+        }
     } else if (handling_data['file_mode'] == 'part') {
         handling_data['file_mode'] = 'full';
         switch_mode_btn.textContent = 'Switch to Part Mode';
         set_status_all('disable', 'part-container');
+        // set_status_all('enable', 'model_form-div');
     }
 }
 
@@ -351,13 +368,13 @@ function add_part() {
             let folder_li = document.getElementById('folder_' + folder_selected);
             let sub_file_list = folder_li.querySelector('ul');
             let li_sub = document.createElement('li');
-            li_sub.id = 'file_'+file_selected;
+            li_sub.id = 'file_' + file_selected;
             let checkbox_sub = document.createElement('input');
             let label_sub = document.createElement('label');
             checkbox_sub.type = 'checkbox';
             checkbox_sub.name = 'part';
-            checkbox_sub.value = 'file_'+file_selected;
-            label_sub.for = 'file_'+file_selected;
+            checkbox_sub.value = 'file_' + file_selected;
+            label_sub.for = 'file_' + file_selected;
             label_sub.textContent = file_selected;
             li_sub.appendChild(checkbox_sub);
             li_sub.appendChild(label_sub);
@@ -365,32 +382,32 @@ function add_part() {
             handling_data.files_part[folder_selected].push(file_selected);
 
         }
-        else{
+        else {
             let li = document.createElement('li');
             li.className = 'file_list_folder';
             let folder_div = document.createElement('div');
             // folder_div.className = 'file_list_folder';
-            li.id = 'folder_'+folder_selected;
+            li.id = 'folder_' + folder_selected;
             let checkbox = document.createElement('input');
             let label = document.createElement('label');
             let sub_file_list = document.createElement('ul');
             checkbox.type = 'checkbox';
             checkbox.name = 'folder';
-            checkbox.value = 'folder_'+folder_selected;
-            label.for = 'folder_'+folder_selected;
+            checkbox.value = 'folder_' + folder_selected;
+            label.for = 'folder_' + folder_selected;
             label.textContent = folder_selected;
             folder_div.appendChild(checkbox);
             folder_div.appendChild(label);
             li.appendChild(folder_div);
             document.getElementById('part_list-ul').appendChild(li);
             let li_sub = document.createElement('li');
-            li_sub.id = 'file_'+file_selected;
+            li_sub.id = 'file_' + file_selected;
             let checkbox_sub = document.createElement('input');
             let label_sub = document.createElement('label');
             checkbox_sub.type = 'checkbox';
             checkbox_sub.name = 'part';
-            checkbox_sub.value = 'file_'+file_selected;
-            label_sub.for = 'file_'+file_selected;
+            checkbox_sub.value = 'file_' + file_selected;
+            label_sub.for = 'file_' + file_selected;
             label_sub.textContent = file_selected;
             li_sub.appendChild(checkbox_sub);
             li_sub.appendChild(label_sub);
@@ -404,10 +421,9 @@ function add_part() {
 }
 
 function check_if_part_exists(part) {
-    let part_list = document.getElementById('part_list-ul');
-    let parts = part_list.querySelectorAll('input[name="part"]');
-    for (let part_elem of parts) {
-        if (part_elem.value == part) {
+    let key_list = Object.keys(handling_data['files_part']);
+    for (let key of key_list) {
+        if (handling_data['files_part'][key].includes(part)) {
             return true;
         }
     }
@@ -761,6 +777,24 @@ function category_select() {
         sub_select.appendChild(option);
     }
     load_category();
+}
+
+function upload_img() {
+    let dataURL = save_capture();  // Obtiene la imagen en formato base64
+    fetch('/upload_image', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 'image': dataURL }),  // Envía el dataURL en el cuerpo de la solicitud
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
 }
 
 function sub_category_terrain() {

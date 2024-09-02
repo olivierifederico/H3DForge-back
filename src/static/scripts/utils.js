@@ -5,37 +5,61 @@ export function encodeUrlParam(param) {
 }
 
 // Variables globales
-let scene, camera, renderer, controls, loader;
-const container = document.getElementById('model_viewer-div');
-
-// Obtén el estilo calculado del contenedor
-const style = window.getComputedStyle(container);
-
-// Obtén el alto total incluyendo padding
-const totalHeight = container.clientHeight;
-const totalWidth = container.clientWidth;
-
-// Obtén el padding superior e inferior
-const paddingTop = parseFloat(style.paddingTop);
-const paddingBottom = parseFloat(style.paddingBottom);
-
-const paddingLateral = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-
-
-// Calcula el alto libre después de restar el padding
-const freeHeight = totalHeight - paddingTop - paddingBottom - 1;
-const freeWidth = totalWidth - paddingLateral - 1;
+let scene, camera, camera2, renderer, renderer2, controls, loader;
+const container = document.getElementById('principal_viewer');
+const container2 = document.getElementById('second_viewer');
+const FIXED_WIDTH = 1200;
+const FIXED_HEIGHT = 1200;
 
 function init() {
+    // Configurar la escena
     scene = new THREE.Scene();
+    camera = setupCamera(container, false);
+    camera2 = setupCamera(container2, true);
+    setupRenderer();
+    setupLights();
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.addEventListener('change', () => {
+        renderer.render(scene, camera);
+        renderer2.render(scene, camera2);
+    });
+    loader = new THREE.STLLoader();
+    window.addEventListener('resize', onWindowResize);
+}
 
-    // Crear la cámara ortográfica
-    const containerWidth = freeWidth;
-    const containerHeight = freeHeight;
-    const aspect = containerWidth / containerHeight;
+function onWindowResize() {
+    const { width, height } = getContainerDimensions(container);
+    renderer.setSize(width, height);
+    updateCameraSize();
+}
+
+function syncCamera(sourceCamera, targetCamera) {
+    targetCamera.position.copy(sourceCamera.position);
+    targetCamera.rotation.copy(sourceCamera.rotation);
+    targetCamera.zoom = sourceCamera.zoom; // Sincronizar el zoom
+    targetCamera.updateProjectionMatrix(); // Asegúrate de actualizar la matriz de proyección
+}
+
+function updateCameraSize() {
+    const { width, height } = getContainerDimensions(container);
+    const aspect = width / height;
+
+    camera.left = -camera.frustumSize * aspect / 2;
+    camera.right = camera.frustumSize * aspect / 2;
+    camera.top = camera.frustumSize / 2;
+    camera.bottom = -camera.frustumSize / 2;
+    camera.updateProjectionMatrix();
+
+    // Sincroniza la cámara2 con la cámara principal
+    synchronizeCameras(camera, camera2);
+}
+
+function setupCamera(container, isFixedSize) {
+    const { width, height } = isFixedSize ? { width: FIXED_WIDTH, height: FIXED_HEIGHT } : getContainerDimensions(container);
+    const aspect = width / height;
     const frustumSize = 20; // Tamaño del frustum en unidades del mundo
 
-    camera = new THREE.OrthographicCamera(
+    const camera = new THREE.OrthographicCamera(
         -frustumSize * aspect / 2, // left
         frustumSize * aspect / 2,  // right
         frustumSize / 2,           // top
@@ -44,108 +68,153 @@ function init() {
         1000                       // far
     );
 
-    // Configurar el renderer
+    camera.frustumSize = frustumSize; // Guarda el tamaño del frustum en la cámara
+
+    return camera;
+}
+function setupRenderer() {
+    const { width, height } = getContainerDimensions(container);
     renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(freeWidth, freeHeight);
+    renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
 
-    // Configurar luces
-    const lightFront = new THREE.DirectionalLight(0xffffff, 1.5);
-    lightFront.position.set(0, 2, 20);
-    scene.add(lightFront);
+    renderer2 = new THREE.WebGLRenderer({ antialias: true });
+    renderer2.setSize(FIXED_WIDTH, FIXED_HEIGHT);
+    container2.style.width = `${FIXED_WIDTH}px`;
+    container2.style.height = `${FIXED_HEIGHT}px`;
+    container2.appendChild(renderer2.domElement);
+}
 
-    const lightBack = new THREE.DirectionalLight(0xffffff, 1.5);
-    lightBack.position.set(0, 2, -20);
-    scene.add(lightBack);
+function setupLights() {
+    const lightPositions = [
+        { x: 0, y: 2, z: 20 },
+        { x: 0, y: 2, z: -20 },
+        { x: -20, y: 2, z: 0 },
+        { x: 20, y: 2, z: 0 }
+    ];
 
-    const lightLeft = new THREE.DirectionalLight(0xffffff, 1.5);
-    lightLeft.position.set(-20, 2, 0);
-    scene.add(lightLeft);
+    lightPositions.forEach(position => {
+        const light = new THREE.DirectionalLight(0xffffff, 1.5);
+        light.position.set(position.x, position.y, position.z);
+        scene.add(light);
+    });
+}
 
-    const lightRight = new THREE.DirectionalLight(0xffffff, 1.5);
-    lightRight.position.set(20, 2, 0);
-    scene.add(lightRight);
-
-    // Añadir control de órbita
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-    // Inicializar el cargador STL
-    loader = new THREE.STLLoader();
+function getContainerDimensions(container) {
+    const style = window.getComputedStyle(container);
+    const totalHeight = container.clientHeight;
+    const totalWidth = container.clientWidth;
+    const paddingTop = parseFloat(style.paddingTop);
+    const paddingBottom = parseFloat(style.paddingBottom);
+    const paddingLateral = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+    const freeHeight = totalHeight - paddingTop - paddingBottom - 1;
+    const freeWidth = totalWidth - paddingLateral - 1;
+    return { width: freeWidth, height: freeHeight };
 }
 
 export function load_model_visor(url) {
     return new Promise((resolve, reject) => {
-        if (!scene) {
-            init();
-        }
+        if (!scene) init();
+
         url = '/static/temp/files/' + url;
-        scene.children.forEach((child) => {
-            if (child.isMesh) {
-                scene.remove(child);
-                if (child.geometry) child.geometry.dispose();
-                if (child.material) child.material.dispose();
-            }
-        });
+        removeExistingModels();
+
         loader.load(url, function (geometry) {
-            geometry.center(); // Centrar el modelo
-            let material = new THREE.MeshLambertMaterial({
-                color: 0x404040 // Gris oscuro
-            });
-            let mesh = new THREE.Mesh(geometry, material);
+            geometry.center();
+            const mesh = createMesh(geometry);
             let measures = get_model_measures(mesh);
             measures['volume_ml'] = calculate_model_volume_ml(mesh);
             measures['has_base'] = hasBase(geometry);
             if (measures['has_base']) {
                 const approximateBaseSize = calculateApproximateBaseDiameter(geometry);
-                console.log(approximateBaseSize);
                 measures['base_size'] = getBaseSizeCategory(approximateBaseSize, measures['max_height_cm']);
             }
-            mesh.scale.set(0.1, 0.1, 0.1); // Ajustar la escala del modelo si es necesario
-            mesh.position.set(0, 0, 0);
-            mesh.rotation.set(-Math.PI / 2, 0, 0); // Rotación en radianes
+
             scene.add(mesh);
-            adjustCameraOrthographic(mesh);
+
+            // Ajustar las cámaras
+            adjustCameraOrthographic(mesh, camera, container);
+            adjustCameraOrthographic(mesh, camera2, container2);
             resolve(measures);
         }, undefined, function (error) {
             reject(error);
         });
+
         animate();
     });
 }
 
-function adjustCameraOrthographic(model) {
-    // Obtener el tamaño del modelo
+function removeExistingModels() {
+    scene.children.forEach(child => {
+        if (child.isMesh) {
+            scene.remove(child);
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) child.material.dispose();
+        }
+    });
+}
+
+function createMesh(geometry) {
+    const material = new THREE.MeshLambertMaterial({ color: 0x404040 });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.scale.set(0.1, 0.1, 0.1);
+    mesh.position.set(0, 0, 0);
+    mesh.rotation.set(-Math.PI / 2, 0, 0);
+    return mesh;
+}
+
+function adjustCameraOrthographic(model, camera, container) {
+    if (scene.children.length === 0) return; // No hay modelo en la escena
+
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
 
-    // Obtener las dimensiones del contenedor
-    const container = document.getElementById('model_viewer-div');
-    const containerWidth = freeWidth;
-    const containerHeight = freeHeight;
-    const aspect = containerWidth / containerHeight;
+    const { width, height } = getContainerDimensions(container);
+    const aspect = width / height;
 
-    // Calcular el tamaño del frustum en función del tamaño del modelo
-    const frustumSize = maxDim * 1.5; // Ajustar el factor según sea necesario
+    const frustumSize = maxDim * 1.5;
 
-    // Ajustar la cámara ortográfica
+    camera.frustumSize = frustumSize;
     camera.left = -frustumSize * aspect / 2;
     camera.right = frustumSize * aspect / 2;
     camera.top = frustumSize / 2;
     camera.bottom = -frustumSize / 2;
     camera.updateProjectionMatrix();
 
-    // Posicionar la cámara
     const center = box.getCenter(new THREE.Vector3());
-    camera.position.set(center.x, center.y, 20); // Ajustar la distancia según sea necesario
+    camera.position.set(center.x, center.y, maxDim * 1.5);
     camera.lookAt(center);
 }
 
 function animate() {
     requestAnimationFrame(animate);
-    controls.update();
+
+    controls.update(); // Actualizar el control compartido
+
+    // Renderizar las vistas
     renderer.render(scene, camera);
+    renderer2.render(scene, camera2);
+
+    // Sincronizar la cámara secundaria con la principal
+    syncCamera(camera, camera2);
 }
+
+function synchronizeCameras(camera1, camera2) {
+    // Sincroniza posición, rotación y frustumSize
+    camera2.position.copy(camera1.position);
+    camera2.rotation.copy(camera1.rotation);
+    camera2.frustumSize = camera1.frustumSize; // Sincroniza el tamaño del frustum
+
+    // Necesita actualizar la matriz de proyección de la cámara2
+    camera2.left = -camera2.frustumSize * (camera2.aspect || 1) / 2;
+    camera2.right = camera2.frustumSize * (camera2.aspect || 1) / 2;
+    camera2.top = camera2.frustumSize / 2;
+    camera2.bottom = -camera2.frustumSize / 2;
+    camera2.updateProjectionMatrix();
+}
+
+// init();
 
 function get_model_measures(model) {
     // Obtener el tamaño del modelo
@@ -301,7 +370,7 @@ function calculateApproximateBaseDiameter(geometry, threshold = 0.05, unitScale 
     }
 
     // Convertir el área a centímetros cuadrados y calcular el diámetro de la base en centímetros
-    const radius = Math.sqrt(baseArea / Math.PI) * unitScale /10; // Ajusta el factor de escala según la unidad usada en la geometría
+    const radius = Math.sqrt(baseArea / Math.PI) * unitScale / 10; // Ajusta el factor de escala según la unidad usada en la geometría
     const diameter = 2 * radius;
 
     console.log(`El diámetro aproximado de la base es: ${diameter.toFixed(2)} cm`);
@@ -326,9 +395,17 @@ function getBaseSizeCategory(baseSize, height) {
             closestCategory = category;
         }
     }
-    if (closestCategory === 'medium' && height < 2.1){
+    if (closestCategory === 'medium' && height < 2.1) {
         closestCategory = 'small';
     }
 
     return closestCategory;
+}
+
+const canvas = new fabric.Canvas('label_canvas');
+let rect, isDrawing = false, shiftPressed = false;
+
+export function save_capture() {
+    const canvas = renderer2.domElement;
+    return canvas.toDataURL('image/png');
 }

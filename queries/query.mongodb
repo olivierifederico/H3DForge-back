@@ -1,7 +1,9 @@
 use('h3dforge_dev')
 
-db['files'].find({'sub_category':'terrain', 'name':{$regex: 'Holm'}
-}, {'_id':1, 'name':1, 'sub_category':1})
+// db['files'].find({'sub_category':'terrain', 'name':{$regex: 'Holm'}
+// }, {'_id':1, 'name':1, 'sub_category':1})
 
 // db['files'].updateOne({'_id':ObjectId('66aa6eb22ad0dc78c5ba2d63')}
 // , {$set: {'sub_category':'part'}})
+
+db['files'].find({'_id':ObjectId('66aa6e242ad0dc78c5ba2ac2')})
