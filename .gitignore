@@ -9,3 +9,5 @@ src/modules/data_providers/mega/__pycache__/
 src/routers/data_providers/__pycache__/
 src/__pycache__/
 src/modules/data_providers/__pycache__/
+src/static/temp/files/ready/
+src/static/temp/files/compressed/

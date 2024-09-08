@@ -47,12 +47,19 @@ async def get_first_document(source_id:str, extension:str) -> dict:
     )
     return document
 
+@router.post('/add_3d_model/', tags=['MongoDB'], status_code=200)
+async def add_3dmodel(model_data:dict) -> bool:
+    print(model_data)
+    return True
+
 # add a new option to the document
 @router.put('/add_form_option/{id}/{detail_field}/{field}/{option}', tags=['MongoDB'], status_code=200)
 async def add_form_option(id: str, detail_field: str, field:str ,option: str) -> bool:
     option = utils.decode_url_params(option)
     response = await mongodb.add_form_option('h3dforge', 'forms', id, detail_field, field, option)
     return response
+
+
 
 @router.put('/set_sub_category/{id}/{sub_category}', tags=['MongoDB'], status_code=200)
 async def set_model_type(id: str, sub_category: str) -> bool:

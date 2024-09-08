@@ -1,4 +1,5 @@
 from ..modules.s3 import S3Service
+from ..modules.file_handler.services import FileHandlerService
 from ..modules.s3.schemas import S3Object
 from ..modules.s3.dependencies import get_s3test_model
 from fastapi import APIRouter, Path, File, UploadFile, Depends, HTTPException
@@ -9,6 +10,7 @@ import os
 s3 = S3Service()
 
 router = APIRouter()
+file_handler = FileHandlerService()
 
 @router.get('/download_from_path/{path}/{ext}', tags=['S3'], status_code=200)
 async def download_from_path(path: str = Path(..., title='Path to download'), ext: str = Path(..., title='Extension')) -> JSONResponse:
@@ -16,17 +18,16 @@ async def download_from_path(path: str = Path(..., title='Path to download'), ex
         url = utils.decode_url_params(path)
         extension = utils.decode_url_params(ext)
         if extension in ['.zip', '.rar', '.7z']:
-            temp_path = 'static/temp/files/compressed/'
+            temp_path = 'static/temp/files/raw_file/'
         else:
             temp_path = 'static/temp/files/ready/'
         os.makedirs(temp_path, exist_ok=True)
-        temp_path = s3.download_from_path('raw-files', url, temp_path=temp_path)
-        if temp_path:
-            files = utils.get_files_from_path(temp_path)
-            return JSONResponse(content={'files': files})
-        else:
-            return JSONResponse(content={'message': 'File not found'})
-        
+        if not os.path.join(temp_path, url) in utils.get_files_from_path(temp_path):
+            file_handler.reset_temp_path()
+            file_handler.create_files_path()
+            temp_path = s3.download_from_path('raw-files', url, temp_path=temp_path)
+        files = utils.get_files_from_path(temp_path)
+        return JSONResponse(content={'files': files})
     except Exception as e:
         print(e)
         raise HTTPException(status_code=400, detail=str(e))

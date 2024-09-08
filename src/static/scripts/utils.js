@@ -116,7 +116,7 @@ export function load_model_visor(url) {
     return new Promise((resolve, reject) => {
         if (!scene) init();
 
-        url = '/static/temp/files/' + url;
+        url = '/static/temp/files/ready/' + url;
         removeExistingModels();
 
         loader.load(url, function (geometry) {

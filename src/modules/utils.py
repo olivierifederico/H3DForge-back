@@ -199,42 +199,42 @@ def extract_raw_file_data(file_name:str):
         final_content = {}
 
         while True:
-            print(files_to_extract)
             for file in files_to_extract:
                 final_content[file] = {}
                 file_path = os.path.join(base_path, file)
                 file_content = get_content(file_path=file_path)
-                compressed_list, ready_list = extract_file_content(file_content, file, root=True)
-                final_content[file]['ready'] = ready_list
+                compressed_list = extract_file_content(file_content, file, root=True)
                 os.remove(file_path)
-                    
-            # print(compressed_list)
             if not compressed_list:
-                
                 break
             else:
                 files_to_extract = compressed_list
-            # break
-        print(final_content)
-        # for i, content in enumerate(contents):
-        #     if content.startswith('__MACOSX'):
-        #         contents.pop(i)
-        # print(content)
-        return
-        files = extract_file(file_name, root=True)
-        if len(files) > 1:
-            for file in files:
-                if file.endswith('.zip') or file.endswith('.rar') or file.endswith('.7z'):
-                    raw_file_data['file_data'][file] = {}
-                    raw_file_data['file_data'][file]['content'] = extract_file(file, root=False)
-                    raw_file_data['file_data'][file]['status'] = 'extracted'
-        else:
-            raw_file_data['original_file'] = file_name
-            raw_file_data['file_data'][file_name] = {}
-            raw_file_data['file_data'][file_name]['content'] = files 
-            raw_file_data['file_data'][file_name]['status'] = 'extracted'
+
+        final_content = get_content_from_path(r'.\static\temp\files\ready')
+        raw_file_data['file_data'] = format_file_data(final_content)
 
         return raw_file_data
+
+def format_file_data(file_data: dict):
+    formatted_data = {}
+    folder_to_pop = []
+    for folder in file_data.keys():
+        file_to_pop = []
+        for file in file_data[folder]:
+            valid_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.txt', '.html']
+            if any(file.endswith(ext) for ext in valid_extensions):
+                file_to_pop.append(file)
+        for file in file_to_pop:
+            file_data[folder].remove(file)
+        if file_data[folder] == []:
+            folder_to_pop.append(folder)
+        else:
+            formatted_data[folder] = {}
+            formatted_data[folder]['content'] = file_data[folder]
+            formatted_data[folder]['status'] = 'extracted'
+    for folder in folder_to_pop:
+        file_data.pop(folder)
+    return formatted_data
 
 def copy_files_to_root(content_dict, compressed_path):
     # Crear el directorio 'compressed' si no existe
@@ -245,6 +245,7 @@ def copy_files_to_root(content_dict, compressed_path):
         if folder:  # Si la carpeta no es la raíz (no es '')
             # Construir la ruta completa de la carpeta
             folder_path = os.path.join(compressed_path, folder)
+            print(folder_path)
             
             # Recorrer y copiar cada archivo en la carpeta
             for file in files:
@@ -252,8 +253,10 @@ def copy_files_to_root(content_dict, compressed_path):
                 dest_file_path = os.path.join(compressed_path, file)
                 
                 # Copiar archivo al directorio 'compressed'
+                print(f'Copiando {src_file_path} a {dest_file_path}')
+                print('====================')
                 shutil.copy2(src_file_path, dest_file_path)
-                shutil.rmtree(folder_path)
+            shutil.rmtree(folder_path)
 
 
 def extract_file_content(file_content, file_name:str = None, root:bool = True):
@@ -274,29 +277,127 @@ def extract_file_content(file_content, file_name:str = None, root:bool = True):
         
     copy_files_to_root(get_content_from_path(compressed_path), compressed_path)
     compressed_list = get_content_from_path(compressed_path)['']
-    ready_list = get_content_from_path(path_to_extract)
+
     for file in compressed_list:
         if file == file_name:
             compressed_list.remove(file)
 
-    return compressed_list, ready_list
-            
+    return compressed_list
+
+def handle_7z(compressed_file:str, file:str, path:str):
+    temp_path = r'.\static\temp'
+    compressed_path = r'.\static\temp\files\compressed'
+    temp_file_path = os.path.join(temp_path, 'files', '7z_temp')
+    ready_path = os.path.join(temp_path, 'files', 'ready')
+    temp_log = os.path.join(temp_path, 'logs')
+    os.makedirs(temp_file_path, exist_ok=True)
+    os.makedirs(temp_log, exist_ok=True)
+    temp_log_file = os.path.join(temp_log, '7z_log.json')
+    extracted_files = verify_files_7z_log(compressed_file, file, temp_log_file, ready_path)
+    if not extracted_files:
+        extracted_files = extract_7z(compressed_file, file, path, temp_log_file, temp_file_path)
+
+def extract_7z(compressed_file:str, file:str, path:str, temp_log_file:str, temp_file_path:str):
+    os.makedirs(path, exist_ok=True)
+    compressed_path = r'.\static\temp\files\compressed'
+    with py7zr.SevenZipFile(compressed_file, 'r') as sevenz_ref:
+        sevenz_ref.extractall(path)
+        extracted_files = get_files_from_path(path)
+        extracted_files = {f: os.path.join(temp_file_path, f) for f in extracted_files}
+        for f in extracted_files.keys():
+            if f.endswith('.7z'):
+                pathx = os.path.join(compressed_path, f)
+                shutil.move(extracted_files[f], pathx)
+                os.remove(extracted_files[f])
+                extracted_files.pop(f)
+            if f.endswith('.rar'):
+                pathx = os.path.join(compressed_path, f)
+                shutil.move(extracted_files[f], pathx)
+                os.remove(extracted_files[f])
+                extracted_files.pop(f)
+            if f.endswith('.zip'):
+                pathx = os.path.join(compressed_path, f)
+                shutil.move(extracted_files[f], pathx)
+                os.remove(extracted_files[f])
+                extracted_files.pop(f)
+        save_json(extracted_files, temp_log_file)
+        return extracted_files
     
+
+def handle_rar(compressed_file:str, file:str, path:str):
+    temp_path = r'.\static\temp'
+    compressed_path = r'.\static\temp\files\compressed'
+    temp_file_path = os.path.join(temp_path, 'files', 'rar_temp')
+    ready_path = os.path.join(temp_path, 'files', 'ready')
+    temp_log = os.path.join(temp_path, 'logs')
+    os.makedirs(temp_file_path, exist_ok=True)
+    os.makedirs(temp_log, exist_ok=True)
+    temp_log_file = os.path.join(temp_log, 'rar_log.json')
+    extracted_files = verify_extract_log(compressed_file, file, temp_log_file, ready_path)
+    if not extracted_files:
+        extracted_files = extract_rar(compressed_file, file, path, temp_log_file, temp_file_path)    
     
+def extract_rar(compressed_file:str, file:str, path:str, temp_log_file:str, temp_file_path:str):
+    os.makedirs(path, exist_ok=True)
+    compressed_path = r'.\static\temp\files\compressed'
+    with rarfile.RarFile(compressed_file, 'r') as rar_ref:
+        print(compressed_file)
+        print(path)
+        print(rar_ref.namelist())
+        rar_ref.extractall(path)
+        peoajfpoeai
+        extracted_files = get_files_from_path(path)
+        extracted_files = {f: os.path.join(temp_file_path, f) for f in extracted_files}
+        for f in extracted_files.keys():
+            if f.endswith('.7z'):
+                pathx = os.path.join(compressed_path, f)
+                shutil.move(extracted_files[f], pathx)
+                os.remove(extracted_files[f])
+                extracted_files.pop(f)
+            if f.endswith('.rar'):
+                pathx = os.path.join(compressed_path, f)
+                shutil.move(extracted_files[f], pathx)
+                os.remove(extracted_files[f])
+                extracted_files.pop(f)
+            if f.endswith('.zip'):
+                pathx = os.path.join(compressed_path, f)
+                shutil.move(extracted_files[f], pathx)
+                os.remove(extracted_files[f])
+                extracted_files.pop(f)
+        save_json(extracted_files, temp_log_file)
+        return extracted_files
+    
+def verify_extract_log(compressed_file, filename, log_path, extracted_path):
+    compressed_file = compressed_file.split('\\')[-1]
+    folder_path = os.path.join(extracted_path, compressed_file)
+    if not os.path.exists(log_path):
+        return False
+    else:
+        extracted_files = load_json(log_path)
+        if not extracted_files:
+            return False
+        if filename not in extracted_files.keys():
+            if not os.path.exists(os.path.join(folder_path, filename)):
+                return False
+            else:
+                return extracted_files
+        else:
+            if not os.path.exists(os.path.join(folder_path, filename)):
+                return False
+            return extracted_files
+  
 def extract_file(compressed_file:str ,file:str, path:str):
     if compressed_file.endswith('.zip'):
         with zipfile.ZipFile(compressed_file, 'r') as zip_ref:
             zip_ref.extract(file, path)
     elif compressed_file.endswith('.rar'):
-        with rarfile.RarFile(compressed_file, 'r') as rar_ref:
-            rar_ref.extract(file, path)
+        handle_rar(compressed_file, file, path)
     elif compressed_file.endswith('.7z'):
-        with py7zr.SevenZipFile(compressed_file, 'r') as sevenz_ref:
-            sevenz_ref.extract(file, path)
+        handle_7z(compressed_file, file, path)
+
     else:
         return False
     return True
-
 
 def get_content(file_path: str):
     # Diccionario para almacenar archivos por carpeta
@@ -351,8 +452,6 @@ def load_json(path: str):
         data = json.load(f)
     return data
 
-
-
 def verify_files_raw_data_log(filename, log_path):
     if not os.path.exists(log_path):
         return False
@@ -379,4 +478,22 @@ def verify_files_raw_data_log(filename, log_path):
                     if not os.path.exists(os.path.join(folder_path, f)):
                         return False
             return raw_file_data
-                
+
+def verify_files_7z_log(compressed_file, filename, log_path, extracted_path):
+    compressed_file = compressed_file.split('\\')[-1]
+    folder_path = os.path.join(extracted_path, compressed_file)
+    if not os.path.exists(log_path):
+        return False
+    else:
+        extracted_files = load_json(log_path)
+        if not extracted_files:
+            return False
+        if filename not in extracted_files.keys():
+            if not os.path.exists(os.path.join(folder_path, filename)):
+                return False
+            else:
+                return extracted_files
+        else:
+            if not os.path.exists(os.path.join(folder_path, filename)):
+                return False
+            return extracted_files

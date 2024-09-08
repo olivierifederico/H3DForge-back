@@ -266,7 +266,7 @@ html {
   height: 100%;
   display: grid;
   grid-template-columns: 0.22fr 0.39fr 0.39fr;
-  grid-template-rows: 0.2fr 0.18fr 0.62fr;
+  grid-template-rows: 0.2fr 0.2fr 0.6fr;
   grid-gap: 20px;
   grid-template-areas: "raw_file file_data model_viewer" "files_info file_data model_viewer" "file_list file_data model_viewer";
 }

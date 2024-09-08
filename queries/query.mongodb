@@ -6,4 +6,4 @@ use('h3dforge_dev')
 // db['files'].updateOne({'_id':ObjectId('66aa6eb22ad0dc78c5ba2d63')}
 // , {$set: {'sub_category':'part'}})
 
-db['files'].find({'_id':ObjectId('66aa6e242ad0dc78c5ba2ac2')})
+db['files'].find({'sub_category':'terrain', 'extension':'.zip'},)

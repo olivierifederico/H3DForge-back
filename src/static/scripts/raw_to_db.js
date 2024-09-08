@@ -11,7 +11,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('category-select').addEventListener('change', category_select);
     document.getElementById('sub_category-select').addEventListener('change', load_category);
     document.getElementById('source-select').addEventListener('change', update_source_data);
-    document.getElementById('folder-select').addEventListener('change', update_file_list);
+    // document.getElementById('folder-select').addEventListener('change', update_file_list);
+    // document.getElementById('file-select').addEventListener('change', load_3d_model);
+    document.getElementById('sub_raw-select').addEventListener('change', update_paths_selector);
+    document.getElementById('path-select').addEventListener('change', update_files_selector);
     document.getElementById('file-select').addEventListener('change', load_3d_model);
 
     document.getElementById('switch_mode-btn').addEventListener('click', switch_mode);
@@ -23,6 +26,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('capture_model-btn').addEventListener('click', upload_img);
 
     document.getElementById('test-btn').addEventListener('click', test_function);
+
+    document.getElementById('add_3d_model-btn').addEventListener('click', add_3d_model);
 
 });
 
@@ -142,17 +147,22 @@ function set_base_data() {
     };
 }
 
-function confirm_source() {
-    let source_id = document.getElementById('source-select').value;
-    let extension = document.getElementById('extension-select').value;
-    set_status_div_children('disable', 'source-div', ['select_source_ext-btn']);
-    // button.textContent = 'Reset';
-    to_load_data['file_details']['source_id'] = source_id;
-    handling_data['extension'] = extension;
-    update_steps('source', 'done');
-    update_steps('file', 'in progress');
-    // set_status_div_children('disable', 'file_info_btns-div', ['load-btn']);
-
+function add_3d_model() {
+    console.log('to_load_data', to_load_data);
+    fetch('/mongodb/add_3d_model', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(to_load_data),
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
 }
 
 function update_source_data() {
@@ -213,7 +223,7 @@ function get_raw_file() {
                 file_info_ul.appendChild(li);
             }
             update_steps('file', 'done');
-            fetch('/s3/download_from_path/' + encodeUrlParam(data['s3']['path']) +'/' + encodeUrlParam(data['extension']), {
+            fetch('/s3/download_from_path/' + encodeUrlParam(data['s3']['path']) + '/' + encodeUrlParam(data['extension']), {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -232,11 +242,13 @@ function get_raw_file() {
                         })
                             .then(response => response.json())
                             .then(data => {
-                                handling_data['files'] = data['folder_files'];
+                                console.log(data)
+                                handling_data['selectors'] = data['folder_files']
                                 set_status_all('enable', 'file_list-div');
                                 set_status_all('disable', 'part_btns-div');
-                                generate_file_list();
-                                update_file_list();
+                                // generate_file_list();
+                                // update_file_list();
+                                generate_sub_raw_selector();
                             })
                         fetch('/mongodb/get_categories_data', {
                             method: 'GET',
@@ -267,6 +279,7 @@ function get_raw_file() {
                                 category_select();
                                 set_status_all('enable', 'handlers');
                                 set_status_all('enable', 'info_handlers');
+                                set_max_height();
                             })
                             .catch((error) => {
                                 console.error('Error:', error);
@@ -280,36 +293,64 @@ function get_raw_file() {
 
 }
 
-function update_file_list() {
-    let folder_select = document.getElementById('folder-select');
-    let folder = folder_select.value;
+function set_max_height() {
+    let div = document.getElementById('bg-in')
+    let height = div.clientHeight;
+    div.style.height = height + 'px';
+    div.style.overflowY = 'auto';
+
+}
+
+function generate_sub_raw_selector() {
+    let sub_raw_select = document.getElementById('sub_raw-select');
+    let path_select = document.getElementById('path-select');
+    let file_select = document.getElementById('file-select');
+    sub_raw_select.innerHTML = '';
+    path_select.innerHTML = '';
+    file_select.innerHTML = '';
+    let selectors_info = handling_data['selectors'];
+    for (let key in selectors_info) {
+        let option = document.createElement('option');
+        option.value = key;
+        option.text = key;
+        sub_raw_select.appendChild(option);
+    }
+    update_paths_selector();
+}
+
+function update_paths_selector() {
+    let selectors_info = handling_data['selectors'];
+    let sub_raw_value = document.getElementById('sub_raw-select').value;
+    let path_select = document.getElementById('path-select');
+    path_select.innerHTML = '';
+    for (let key in selectors_info[sub_raw_value]) {
+        let option = document.createElement('option');
+        option.value = key;
+        option.text = key;
+        path_select.appendChild(option);
+    }
+    update_files_selector();
+}
+
+function update_files_selector(){
+    let selectors_info = handling_data['selectors'];
+    let sub_raw_value = document.getElementById('sub_raw-select').value;
+    let path_value = document.getElementById('path-select').value;
     let file_select = document.getElementById('file-select');
     file_select.innerHTML = '';
-    for (let filename of handling_data['files']['file_data'][folder]['content']) {
+    for (let file of selectors_info[sub_raw_value][path_value]) {
         let option = document.createElement('option');
-        option.value = filename;
-        option.text = filename;
+        option.value = file;
+        option.text = file.split('\\').pop();
         file_select.appendChild(option);
     }
     load_3d_model();
 }
 
-function generate_file_list() {
-    let file_select = document.getElementById('file-select');
-    file_select.innerHTML = '';
-    let folder_select = document.getElementById('folder-select');
-    folder_select.innerHTML = '';
-    let file_list = handling_data['files']['file_data'];
-    for (let folder in file_list) {
-        let option = document.createElement('option');
-        option.value = folder;
-        option.text = folder;
-        folder_select.appendChild(option);
-    }
-}
 
 function load_3d_model() {
-    let folder_selected = document.getElementById('folder-select').value;
+    let sub_raw_value = document.getElementById('sub_raw-select').value;
+    let path_value = document.getElementById('path-select').value;
     let file_selected = document.getElementById('file-select').value;
     if (handling_data['file_mode'] == 'part') {
         if (check_if_part_exists(file_selected)) {
@@ -322,16 +363,16 @@ function load_3d_model() {
 
     let original_name = file_selected;
     handling_data['file'] = file_selected;
-    if (file_selected) {
-        if (folder_selected != 'no_folder') {
-            file_selected = 'extracted/folders/' + folder_selected + '/' + file_selected;
-        }
-        load_model_visor(file_selected)
-            .then(measures => {
-                to_load_data['file_details']['original_name'] = original_name;
-                to_load_data['print_details']['measures'] = measures;
-            })
-    }
+    // if (file_selected) {
+    //     if (folder_selected != 'no_folder') {
+    //         file_selected = 'ready/' + folder_selected + '/' + file_selected;
+    //     }
+    load_model_visor(file_selected)
+        .then(measures => {
+            to_load_data['file_details']['original_name'] = original_name;
+            to_load_data['print_details']['measures'] = measures;
+        })
+    // }
 }
 
 function switch_mode() {
@@ -788,13 +829,13 @@ function upload_img() {
         },
         body: JSON.stringify({ 'image': dataURL }),  // Envía el dataURL en el cuerpo de la solicitud
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Success:', data);
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
 }
 
 function sub_category_terrain() {

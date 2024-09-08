@@ -322,7 +322,7 @@ html {
         height: 100%;
         display: grid;
         grid-template-columns: 0.22fr 0.39fr 0.39fr;
-        grid-template-rows: 0.20fr 0.18fr 0.62fr;
+        grid-template-rows: 0.20fr 0.20fr 0.60fr;
         grid-gap: 20px;
         grid-template-areas:
             "raw_file file_data model_viewer"
