@@ -22,11 +22,13 @@ async def download_from_path(path: str = Path(..., title='Path to download'), ex
         else:
             temp_path = 'static/temp/files/ready/'
         os.makedirs(temp_path, exist_ok=True)
-        if not os.path.join(temp_path, url) in utils.get_files_from_path(temp_path):
-            file_handler.reset_temp_path()
-            file_handler.create_files_path()
-            temp_path = s3.download_from_path('raw-files', url, temp_path=temp_path)
+        temp_path = s3.download_from_path('raw-files', url, temp_path=temp_path)
         files = utils.get_files_from_path(temp_path)
+        file_name = url.split('/')[-1]
+        if file_name in files:
+            return JSONResponse(content={'file': file_name})
+        else:
+            raise HTTPException(status_code=404, detail='File not found')
         return JSONResponse(content={'files': files})
     except Exception as e:
         print(e)

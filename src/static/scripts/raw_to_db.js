@@ -1,4 +1,4 @@
-import { encodeUrlParam, load_model_visor, save_capture, capitalize_first_letter } from "./utils.js";
+import { encodeUrlParam, load_model_visor, save_capture, capitalize_first_letter, rotateY45Degrees, rotateX45Degrees } from "./utils.js";
 
 document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('get_raw_file-btn').addEventListener('click', get_raw_file);
@@ -8,22 +8,24 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('skip_other-btn').addEventListener('click', other);
     document.getElementById('skip_monster-btn').addEventListener('click', monster);
 
-    document.getElementById('category-select').addEventListener('change', category_select);
-    document.getElementById('sub_category-select').addEventListener('change', load_category);
-    document.getElementById('source-select').addEventListener('change', update_source_data);
-    // document.getElementById('folder-select').addEventListener('change', update_file_list);
-    // document.getElementById('file-select').addEventListener('change', load_3d_model);
+    document.getElementById('category-select').addEventListener('change', front.update_category_selectors);
+    document.getElementById('sub_category-select').addEventListener('change', front.generate_form.bind(front));
+    document.getElementById('source-select').addEventListener('change', front.update_source_selectors);
+
     document.getElementById('sub_raw-select').addEventListener('change', update_paths_selector);
     document.getElementById('path-select').addEventListener('change', update_files_selector);
     document.getElementById('file-select').addEventListener('change', load_3d_model);
 
-    document.getElementById('switch_mode-btn').addEventListener('click', switch_mode);
-    document.getElementById('add_part-btn').addEventListener('click', add_part);
+    document.getElementById('switch_mode-btn').addEventListener('click', front.switch_mode.bind(front));
+    document.getElementById('add_part-btn').addEventListener('click', front.add_part.bind(front));
+    document.getElementById('remove_part-btn').addEventListener('click', front.remove_part.bind(front));
 
     document.getElementById('confirm_form-btn').addEventListener('click', confirm_form);
 
     document.getElementById('reset_model-btn').addEventListener('click', load_3d_model);
     document.getElementById('capture_model-btn').addEventListener('click', upload_img);
+    document.getElementById('rotate_y-btn').addEventListener('click', rotateY45Degrees);
+    document.getElementById('rotate_x-btn').addEventListener('click', rotateX45Degrees);
 
     document.getElementById('test-btn').addEventListener('click', test_function);
 
@@ -31,13 +33,373 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 });
 
-let sources, categories, sub_categories, raw_file_data, front_data, to_load_data, handling_data;
+
+// terminar clase de datahandler
+class DataHandler {
+    constructor() {
+        this.init_data();
+    }
+    init_data() {
+        this.to_load = {
+            'model_details': {},
+            'print_details': {},
+            'file_details': {}
+        };
+        this.handling = {
+            'extension': false,
+            'print': false,
+            'file_mode': 'full',
+            'files_part': {},
+            'file_count': 0,
+            'form_keys': {
+                'model': [],
+                'print': [],
+                'file': [],
+            },
+            files: {}
+        };
+    }
+}
+
+class BackHandler {
+    async get_source_data() {
+        let params = new URLSearchParams({ 'database': 'h3dforge', 'name': 'sources', });
+        let response = await fetch(`/mongodb/get_documents/?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        return response.json();
+    }
+
+    async get_form_data(category_id, sub_category_id) {
+        let response = await fetch(`/mongodb/get_form/${category_id}-${sub_category_id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        return response.json();
+    }
+
+}
+
+class FrontHandler {
+    constructor() {
+        this.raw_file = {
+            'source_select': document.getElementById('source-select'),
+            'extension_select': document.getElementById('extension-select'),
+        }
+        this.file_list = {
+            'sub_raw_select': document.getElementById('sub_raw-select'),
+            'path_select': document.getElementById('path-select'),
+            'file_select': document.getElementById('file-select'),
+            'part_list_ul': document.getElementById('part_list-ul'),
+            'switch_mode_btn': document.getElementById('switch_mode-btn'),
+            'add_part_btn': document.getElementById('add_part-btn'),
+        }
+        this.category = {
+            'category_select': document.getElementById('category-select'),
+            'sub_category_select': document.getElementById('sub_category-select'),
+        }
+    }
+    create_option(value, text, select_to_append = null) {
+        let option = document.createElement('option');
+        option.value = value;
+        option.text = text;
+        if (select_to_append) {
+            select_to_append.appendChild(option);
+        }
+        return option;
+    }
+    create_select(id = null, classes = null, select_to_append = null) {
+        let select = document.createElement('select');
+        select.id = id;
+        if (classes) {
+            select.className = classes;
+        }
+        if (select_to_append) {
+            select_to_append.appendChild(select);
+        }
+        return select;
+    }
+    create_button(type, text, id = null, classes = null, select_to_append = null) {
+        let button = document.createElement('button');
+        button.type = type;
+        button.id = id;
+        button.textContent = text;
+        if (classes) {
+            button.className = classes;
+        }
+        if (select_to_append) {
+            select_to_append.appendChild(button);
+        }
+        return button;
+    }
+    create_input(type, id = null, name = null, value = null, classes = null, select_to_append = null) {
+        let input = document.createElement('input');
+        input.type = type;
+        input.id = id;
+        input.name = name;
+        if (classes) {
+            input.className = classes;
+        }
+        if (select_to_append) {
+            select_to_append.appendChild(input);
+        }
+        return input;
+    }
+    create_div(id = null, classes = null, select_to_append = null) {
+        let div = document.createElement('div');
+        div.id = id;
+        if (classes) {
+            div.className = classes;
+        }
+        if (select_to_append) {
+            select_to_append.appendChild(div);
+        }
+        return div;
+    }
+    create_li(id = null, classes = null, select_to_append = null) {
+        let li = document.createElement('li');
+        li.id = id;
+        if (classes) {
+            li.className = classes;
+        }
+        if (select_to_append) {
+            select_to_append.appendChild(li);
+        }
+        return li;
+    }
+    create_label(for_id, text, select_to_append = null) {
+        let label = document.createElement('label');
+        label.for = for_id;
+        label.textContent = text;
+        if (select_to_append) {
+            select_to_append.appendChild(label);
+        }
+        return label;
+    }
+    generate_source_selectors(sources) {
+        for (let source of sources) {
+            let source_text = capitalize_first_letter(source['name']) + '-' + capitalize_first_letter(source['server']);
+            this.create_option(source['_id'], source_text, this.raw_file.source_select);
+        }
+        this.create_option(null, 'No source', this.raw_file.source_select);
+    }
+    update_source_selectors() {
+        let source = sources.find(source => source['_id'] == this.raw_file.source_select.value);
+        this.raw_file.extension_select.innerHTML = '';
+        if (source == undefined || source['content'] == undefined || source['content']['types'] == undefined) {
+            this.create_option('no_extension', 'No types', this.raw_file.extension_select);
+            front.raw_file.extension_select.disabled = true;
+        } else {
+            front.raw_file.extension_select.disabled = false;
+            for (let key in source['content']['types']) {
+                this.create_option(key, key, this.raw_file.extension_select);
+            }
+            this.create_option('any_extension', 'Any', this.raw_file.extension_select);
+        }
+    }
+    generate_category_selectors() {
+        for (let category of data.handling.categories) {
+            categories_data['category'][category['id']] = category['_id'];
+        }
+        for (let sub_category of data.handling.sub_categories) {
+            categories_data['sub_category'][sub_category['id']] = sub_category['_id']
+        }
+        for (let category of data.handling.categories) {
+            front.create_option(category['id'], category['name'], front.category.category_select);
+        }
+    }
+    update_category_selectors() {
+        let subs = []
+        console.log('a la wea pinche perro')
+        for (let sub of data.handling.sub_categories) {
+            if (sub['category_id'] == this.category.category_select.value) {
+                subs.push(sub);
+            }
+        }
+        if (subs.length == 0) {
+            this.category.sub_category_select.innerHTML = '';
+            this.create_option(null, 'No subcategories', this.category.sub_category_select);
+            this.handling.sub_select.disabled = true;
+        } else {
+            front.category.sub_category_select.disabled = false;
+            front.category.sub_category_select.innerHTML = '';
+            for (let sub of subs) {
+                this.create_option(sub['id'], sub['name'], this.category.sub_category_select);
+            }
+            this.create_option(null, 'No subcategory', this.category.sub_category_select);
+        }
+        this.generate_form();
+    }
+    async generate_form() {
+        data.to_load['model_details']['category_id'] = categories_data['category'][front.category.category_select.value];
+        if (front.category.sub_category_select.value != 'null') {
+            data.to_load['model_details']['sub_category_id'] = categories_data['sub_category'][front.category.sub_category_select.value];
+        }
+        let response_data = await back.get_form_data(front.category.category_select.value, front.category.sub_category_select.value);
+        data.handling['form_keys']['form_id'] = response_data['_id'];
+        let model_fields = response_data['model_details'];
+        let print_fields = response_data['print_details'];
+        this.generate_form_inputs('model_details-div', model_fields, 'model');
+        this.generate_form_inputs('print_details-div', print_fields, 'print');
+        set_status_all('enable', 'model_form-div');
+
+    }
+    generate_form_inputs(div_id, fields, form_type) {
+        let div = document.getElementById(div_id);
+        for (let child of div.children) {
+            if (child.tagName != 'UL') {
+                div.removeChild(child);
+            }
+        }
+        let ul = div.querySelector('ul');
+        let button_div = front.create_div(null, 'btn-form');
+        let key_list = Object.keys(fields);
+        let button_list = []
+        ul.innerHTML = '';
+        for (let key of key_list) {
+            if (key != 'notes' && key != 'problems') {
+                data.handling['form_keys'][form_type].push(key);
+            }
+            let field = fields[key];
+            let li = front.create_li(null, 'form-group margin-bottom-5');
+            let label = front.create_label(key, (capitalize_first_letter(key) + ':').replace(/_/g, ' '));
+            let select_field = front.create_select(key + '_form--input');
+            if ('options' in field) {
+                for (let option of field['options']) {
+                    front.create_option(option, option, select_field);
+                }
+                li.appendChild(label);
+                let mini_div = front.create_div(key + '_-_' + div_id + '--db_field', 'selector-div', li);
+                let button_add = front.create_button('button', 'Add', null, 'btn btn-primary xmini-btn');
+                button_add.addEventListener('click', add_item_to_db)
+                mini_div.appendChild(select_field);
+                mini_div.appendChild(button_add);
+                if (key == 'complexity' || key == 'quality') {
+                    button_add.style.display = 'none';
+                }
+            } else if (field['type'] == 'boolean') {
+                let input_field = front.create_input('checkbox', key + '_form--input', key);
+                li.appendChild(label);
+                li.appendChild(input_field);
+            } else if (field['type'] == 'button') {
+                let button = front.create_button('button', capitalize_first_letter(key), key + '-btn', 'btn btn-primary xmini-btn');
+                button.addEventListener('click', () => {
+                    let func = window[field['function']];
+                    if (typeof func === 'function') {
+                        func(); // Llamar a la función si es válida
+                    } else {
+                        console.error(`${field['function']} no es una función o no está definida.`);
+                    }
+                });
+                button_list.push(button);
+            }
+            if (field['type'] != 'button') {
+                ul.appendChild(li);
+            }
+            for (let button of button_list) {
+                button_div.appendChild(button);
+            }
+            div.appendChild(button_div);
+        }
+    }
+    switch_mode() {
+        if (data.handling['file_mode'] == 'full') {
+            this.file_list.switch_mode_btn.textContent = 'Switch to Full Mode';
+            data.handling['file_mode'] = 'part';
+            set_status_all('disable', 'part-container');
+            set_status_all('enable', 'part-container');
+            if (check_if_part_exists(this.file_list.file_select.value)) {
+                document.getElementById('add_part-btn').disabled = true;
+            }
+        } else if (data.handling['file_mode'] == 'part') {
+            data.handling['file_mode'] = 'full';
+            this.file_list.switch_mode_btn.textContent = 'Switch to Part Mode';
+            set_status_all('disable', 'part-container');
+        }
+    }
+    add_part() {
+        let sub_raw_selected = this.file_list.sub_raw_select.value + ' => ' + this.file_list.path_select.value;
+        let file_selected = this.file_list.file_select.value;
+        this.file_list.add_part_btn.disabled = true;
+        if (check_if_part_exists(file_selected)) {
+            console.log('Part already exists');
+            return;
+        } else {
+            let key_list = Object.keys(data.handling['files_part']);
+            if (key_list.includes(sub_raw_selected)) {
+                let folder_li = document.getElementById('folder_' + sub_raw_selected);
+                let sub_file_list = folder_li.querySelector('ul');
+                let li_sub = this.create_li('file_' + file_selected, null, sub_file_list);
+                this.create_input('checkbox', file_selected, 'part', 'file_' + file_selected, null, li_sub);
+                this.create_label('file_' + file_selected, file_selected.split('\\').pop(), li_sub);
+                data.handling.files_part[sub_raw_selected].push(file_selected);
+            }
+            else {
+                let li = this.create_li('folder_' + sub_raw_selected, 'file_list_folder', this.file_list.part_list_ul);
+                let folder_div = this.create_div(null, 'file_list_folder', li);
+                this.create_input('checkbox', sub_raw_selected, 'folder', 'folder_' + sub_raw_selected, 'sub_raw_checkbox', folder_div);
+                this.create_label('folder_' + sub_raw_selected, sub_raw_selected, folder_div);
+                let sub_file_list = document.createElement('ul');
+                let li_sub = this.create_li('file_' + file_selected, null, sub_file_list);
+                this.create_input('checkbox', null, 'part', 'file_' + file_selected, null, li_sub);
+                this.create_label('file_' + file_selected, file_selected.split('\\').pop(), li_sub);
+                li.appendChild(sub_file_list);
+
+                data.handling['files_part'][sub_raw_selected] = []
+                data.handling.files_part[sub_raw_selected].push(file_selected);
+            }
+        }
+    }
+    remove_part() {
+        let ul = this.file_list.part_list_ul;
+        let sub_raws_list = ul.querySelectorAll('li.file_list_folder');
+        for (let li of sub_raws_list) {
+            let sub_raw_checkbox = li.querySelector('input[type="checkbox"]');
+            if (sub_raw_checkbox.checked) {
+                let sub_raw_key = sub_raw_checkbox.id;
+                delete data.handling['files_part'][sub_raw_key];
+                ul.removeChild(li);
+                front.file_list.add_part_btn.disabled = false;
+            }else {
+                let sub_file_list = li.querySelectorAll('li');
+                let sub_ul = li.querySelector('ul');
+                for (let file of  sub_file_list) {
+                    let file_checkbox = file.querySelector('input[type="checkbox"]');
+                    if (file_checkbox.checked) {
+                        let file_key = file_checkbox.id;
+                        let sub_raw_id = li.id.split('folder_')[1];
+                        let sub_raw_files = data.handling.files_part[sub_raw_id];
+                        let index = sub_raw_files.indexOf(file_key)
+                        sub_raw_files.splice(index, 1);
+                        sub_ul.removeChild(file);
+                    }
+                }
+                sub_file_list = li.querySelectorAll('li');
+                if (sub_file_list.length == 0) {
+                    ul.removeChild(li);
+                    let sub_raw_keyx = li.id.split('folder_')[1];
+                    delete data.handling['files_part'][sub_raw_keyx];
+                }
+            }
+        }
+    }
+}
+
+let sources, raw_file_data;
+
+const data = new DataHandler();
+const back = new BackHandler();
+const front = new FrontHandler();
 
 let categories_data = {
     'category': {},
     'sub_category': {}
 }
-
 
 let steps = {
     'init': 'ready',
@@ -51,10 +413,10 @@ let steps = {
 function test_function() {
     console.log('====================');
     console.log('to_load_data');
-    console.log(to_load_data);
+    console.log(data.to_load);
     console.log('====================');
     console.log('handling_data');
-    console.log(handling_data);
+    console.log(data.handling);
     console.log('====================');
     console.log('steps');
     console.log(steps);
@@ -62,73 +424,18 @@ function test_function() {
 }
 
 init_page();
-// console.log('raw_to_db.js loaded');
-function init_page() {
+async function init_page() {
     init_status_info();
     set_base_data();
-    let params = new URLSearchParams(
-        {
-            'database': 'h3dforge',
-            'name': 'sources',
-        }
-    );
-    fetch(`/mongodb/get_documents/?${params.toString()}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-        .then(response => response.json())
-        .then(data => {
-            sources = data;
-            let source_select = document.getElementById('source-select');
-            for (let source of sources) {
-                let option = document.createElement('option');
-                option.value = source['_id'];
-                option.text = capitalize_first_letter(source['name']) + '-' + capitalize_first_letter(source['server']);
-                source_select.appendChild(option);
-            }
-            let dumb_option = document.createElement('option');
-            dumb_option.value = null;
-            dumb_option.text = 'No source';
-            source_select.appendChild(dumb_option);
-
-        })
-        .then(() => {
-            update_source_data();
-        })
-
-        .then(() => {
-            update_steps('source', 'in progress');
-            set_status_all();
-            set_status_all('enable', 'source-div');
-
-            // set_status_all('disable', 'form-container')
-            // set_status_all('enable', 'category-div')
-        })
+    sources = await back.get_source_data()
+    front.generate_source_selectors(sources);
+    front.update_source_selectors();
+    update_steps('source', 'in progress');
+    set_status_all();
+    set_status_all('enable', 'source-div');
 }
 
 function set_base_data() {
-    to_load_data = {}
-    to_load_data = {
-        'model_details': {},
-        'print_details': {},
-        'file_details': {}
-    };
-    handling_data = {}
-    handling_data = {
-        'extension': false,
-        'print': false,
-        'file_mode': 'full',
-        'files_part': {},
-        'file_count': 0,
-        'form_keys': {
-            'model': [],
-            'print': [],
-            'file': [],
-        },
-        files: {}
-    };
     steps = {
         'init': 'ready',
         'source': 'ready',
@@ -148,71 +455,42 @@ function set_base_data() {
 }
 
 function add_3d_model() {
-    console.log('to_load_data', to_load_data);
+    // console.log('to_load_data', to_load_data);
     fetch('/mongodb/add_3d_model', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(to_load_data),
+        body: JSON.stringify(data.to_load),
     })
         .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
+        .then(response_data => {
+            console.log('Success:', response_data);
         })
         .catch((error) => {
             console.error('Error:', error);
         });
 }
 
-function update_source_data() {
-    let source_id = document.getElementById('source-select').value;
-    let source = sources.find(source => source['_id'] == source_id);
-    let select = document.getElementById('extension-select');
-    let source_div = document.getElementById('source-div');
-    select.innerHTML = '';
-    if (source == undefined || source['content'] == undefined || source['content']['types'] == undefined) {
-        let option = document.createElement('option');
-        option.value = 'no_extension';
-        option.text = 'No types';
-        select.appendChild(option);
-        select.disabled = true;
-    } else {
-        for (let key in source['content']['types']) {
-            select.disabled = false;
-            let option = document.createElement('option');
-            option.value = key;
-            option.text = key;
-            select.appendChild(option);
-        }
-        let any_option = document.createElement('option');
-        any_option.value = 'any_extension';
-        any_option.text = 'Any';
-        select.appendChild(any_option);
-    }
-}
-
 function get_raw_file() {
-    let source_id = document.getElementById('source-select').value;
-    let extension = document.getElementById('extension-select').value;
-    to_load_data['file_details']['source_id'] = source_id;
-    handling_data['extension'] = extension;
+    data.to_load['file_details']['source_id'] = front.raw_file.source_select.value;
+    data.handling['extension'] = front.raw_file.extension_select.value;
     update_steps('source', 'done');
     update_steps('file', 'in progress');
-    fetch('/mongodb/get_raw_file/' + source_id + '/' + encodeUrlParam(extension), {
+    fetch('/mongodb/get_raw_file/' + front.raw_file.source_select.value + '/' + encodeUrlParam(front.raw_file.extension_select.value), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         },
     })
         .then(response => response.json())
-        .then(data => {
-            raw_file_data = data;
-            to_load_data['file_details']['source_path'] = data['url'];
+        .then(response_data => {
+            raw_file_data = response_data;
+            data.to_load['file_details']['source_path'] = response_data['url'];
             let log_data = {
-                'ID': data['_id'],
-                'Name': data['name'],
-                'Size': data['size'],
+                'ID': response_data['_id'],
+                'Name': response_data['name'],
+                'Size': response_data['size'],
             }
             let file_info_ul = document.getElementById('file_info-ul');
 
@@ -223,68 +501,50 @@ function get_raw_file() {
                 file_info_ul.appendChild(li);
             }
             update_steps('file', 'done');
-            fetch('/s3/download_from_path/' + encodeUrlParam(data['s3']['path']) + '/' + encodeUrlParam(data['extension']), {
+            fetch('/s3/download_from_path/' + encodeUrlParam(response_data['s3']['path']) + '/' + encodeUrlParam(response_data['extension']), {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             })
                 .then(response => response.json())
-                .then(data => {
+                .then(response_data => {
                     let file_select = document.getElementById('file-select');
                     file_select.innerHTML = '';
-                    if (extension != '.stl') {
-                        fetch('/utils/extract_file/' + encodeUrlParam(data['files'][0]), {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
+                    fetch('/utils/extract_file/' + encodeUrlParam(response_data['file']), {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    })
+                        .then(response => response.json())
+                        .then(response_data => {
+                            data.handling['selectors'] = response_data['folder_files']['files'];
+                            set_status_all('enable', 'file_list-div');
+                            set_status_all('disable', 'part_btns-div');
+                            generate_sub_raw_selector();
                         })
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log(data)
-                                handling_data['selectors'] = data['folder_files']
-                                set_status_all('enable', 'file_list-div');
-                                set_status_all('disable', 'part_btns-div');
-                                // generate_file_list();
-                                // update_file_list();
-                                generate_sub_raw_selector();
-                            })
-                        fetch('/mongodb/get_categories_data', {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
+                    fetch('/mongodb/get_categories_data', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    })
+                        .then(response => response.json())
+                        .then(response_data => {
+                            data.handling.categories = response_data['categories'];
+                            data.handling.sub_categories = response_data['sub_categories'];
+                            front.generate_category_selectors();
                         })
-                            .then(response => response.json())
-                            .then(data => {
-                                categories = data['categories'];
-                                for (let category of categories) {
-                                    categories_data
-                                    categories_data['category'][category['id']] = category['_id'];
-                                }
-                                sub_categories = data['sub_categories'];
-                                for (let sub_category of sub_categories) {
-                                    categories_data['sub_category'][sub_category['id']] = sub_category['_id']
-                                }
-                                let category_select = document.getElementById('category-select');
-                                for (let category of categories) {
-                                    let option = document.createElement('option');
-                                    option.value = category['id'];
-                                    option.text = category['name'];
-                                    category_select.appendChild(option);
-                                }
-                            })
-                            .then(() => {
-                                category_select();
-                                set_status_all('enable', 'handlers');
-                                set_status_all('enable', 'info_handlers');
-                                set_max_height();
-                            })
-                            .catch((error) => {
-                                console.error('Error:', error);
-                            })
-                    }
+                        .then(() => {
+                            front.update_category_selectors();
+                            set_status_all('enable', 'handlers');
+                            set_status_all('enable', 'info_handlers');
+                            set_max_height();
+                        })
+                        .catch((error) => {
+                            console.error('Error:', error);
+                        })
                 })
         })
         .catch((error) => {
@@ -298,7 +558,6 @@ function set_max_height() {
     let height = div.clientHeight;
     div.style.height = height + 'px';
     div.style.overflowY = 'auto';
-
 }
 
 function generate_sub_raw_selector() {
@@ -308,7 +567,7 @@ function generate_sub_raw_selector() {
     sub_raw_select.innerHTML = '';
     path_select.innerHTML = '';
     file_select.innerHTML = '';
-    let selectors_info = handling_data['selectors'];
+    let selectors_info = data.handling['selectors'];
     for (let key in selectors_info) {
         let option = document.createElement('option');
         option.value = key;
@@ -319,7 +578,7 @@ function generate_sub_raw_selector() {
 }
 
 function update_paths_selector() {
-    let selectors_info = handling_data['selectors'];
+    let selectors_info = data.handling['selectors'];
     let sub_raw_value = document.getElementById('sub_raw-select').value;
     let path_select = document.getElementById('path-select');
     path_select.innerHTML = '';
@@ -332,8 +591,8 @@ function update_paths_selector() {
     update_files_selector();
 }
 
-function update_files_selector(){
-    let selectors_info = handling_data['selectors'];
+function update_files_selector() {
+    let selectors_info = data.handling['selectors'];
     let sub_raw_value = document.getElementById('sub_raw-select').value;
     let path_value = document.getElementById('path-select').value;
     let file_select = document.getElementById('file-select');
@@ -347,14 +606,13 @@ function update_files_selector(){
     load_3d_model();
 }
 
-
 function load_3d_model() {
     let sub_raw_value = document.getElementById('sub_raw-select').value;
     let path_value = document.getElementById('path-select').value;
     let file_selected = document.getElementById('file-select').value;
-    if (handling_data['file_mode'] == 'part') {
+    if (data.handling['file_mode'] == 'part') {
         if (check_if_part_exists(file_selected)) {
-            console.log(handling_data['file_mode']);
+            console.log(data.handling['file_mode']);
             document.getElementById('add_part-btn').disabled = true;
         } else {
             document.getElementById('add_part-btn').disabled = false;
@@ -362,185 +620,34 @@ function load_3d_model() {
     }
 
     let original_name = file_selected;
-    handling_data['file'] = file_selected;
-    // if (file_selected) {
-    //     if (folder_selected != 'no_folder') {
-    //         file_selected = 'ready/' + folder_selected + '/' + file_selected;
-    //     }
+    data.handling['file'] = file_selected;
     load_model_visor(file_selected)
         .then(measures => {
-            to_load_data['file_details']['original_name'] = original_name;
-            to_load_data['print_details']['measures'] = measures;
+            data.to_load['file_details']['original_name'] = original_name;
+            data.to_load['print_details']['measures'] = measures;
         })
     // }
 }
 
-function switch_mode() {
-    let switch_mode_btn = document.getElementById('switch_mode-btn');
-    let file_selected = document.getElementById('file-select').value;
-    if (handling_data['file_mode'] == 'full') {
-        handling_data['file_mode'] = 'part';
-        switch_mode_btn.textContent = 'Switch to Full Mode';
-        // set_status_all('disable', 'model_form-div');
-        set_status_all('disable', 'part-container');
-        set_status_all('enable', 'part-container');
-        if (check_if_part_exists(file_selected)) {
-            document.getElementById('add_part-btn').disabled = true;
-        }
-    } else if (handling_data['file_mode'] == 'part') {
-        handling_data['file_mode'] = 'full';
-        switch_mode_btn.textContent = 'Switch to Part Mode';
-        set_status_all('disable', 'part-container');
-        // set_status_all('enable', 'model_form-div');
-    }
-}
-
-function add_part() {
-    let folder_selected = document.getElementById('folder-select').value;
-    let file_selected = document.getElementById('file-select').value;
-    document.getElementById('add_part-btn').disabled = true;
-    if (check_if_part_exists(file_selected)) {
-        console.log('Part already exists');
-        return;
-    } else {
-
-        let key_list = Object.keys(handling_data['files_part']);
-        if (key_list.includes(folder_selected)) {
-            let folder_li = document.getElementById('folder_' + folder_selected);
-            let sub_file_list = folder_li.querySelector('ul');
-            let li_sub = document.createElement('li');
-            li_sub.id = 'file_' + file_selected;
-            let checkbox_sub = document.createElement('input');
-            let label_sub = document.createElement('label');
-            checkbox_sub.type = 'checkbox';
-            checkbox_sub.name = 'part';
-            checkbox_sub.value = 'file_' + file_selected;
-            label_sub.for = 'file_' + file_selected;
-            label_sub.textContent = file_selected;
-            li_sub.appendChild(checkbox_sub);
-            li_sub.appendChild(label_sub);
-            sub_file_list.appendChild(li_sub);
-            handling_data.files_part[folder_selected].push(file_selected);
-
-        }
-        else {
-            let li = document.createElement('li');
-            li.className = 'file_list_folder';
-            let folder_div = document.createElement('div');
-            // folder_div.className = 'file_list_folder';
-            li.id = 'folder_' + folder_selected;
-            let checkbox = document.createElement('input');
-            let label = document.createElement('label');
-            let sub_file_list = document.createElement('ul');
-            checkbox.type = 'checkbox';
-            checkbox.name = 'folder';
-            checkbox.value = 'folder_' + folder_selected;
-            label.for = 'folder_' + folder_selected;
-            label.textContent = folder_selected;
-            folder_div.appendChild(checkbox);
-            folder_div.appendChild(label);
-            li.appendChild(folder_div);
-            document.getElementById('part_list-ul').appendChild(li);
-            let li_sub = document.createElement('li');
-            li_sub.id = 'file_' + file_selected;
-            let checkbox_sub = document.createElement('input');
-            let label_sub = document.createElement('label');
-            checkbox_sub.type = 'checkbox';
-            checkbox_sub.name = 'part';
-            checkbox_sub.value = 'file_' + file_selected;
-            label_sub.for = 'file_' + file_selected;
-            label_sub.textContent = file_selected;
-            li_sub.appendChild(checkbox_sub);
-            li_sub.appendChild(label_sub);
-            sub_file_list.appendChild(li_sub);
-            li.appendChild(sub_file_list);
-
-            handling_data['files_part'][folder_selected] = []
-            handling_data.files_part[folder_selected].push(file_selected);
-        }
-    }
-}
-
 function check_if_part_exists(part) {
-    let key_list = Object.keys(handling_data['files_part']);
+    let key_list = Object.keys(data.handling['files_part']);
     for (let key of key_list) {
-        if (handling_data['files_part'][key].includes(part)) {
+        if (data.handling['files_part'][key].includes(part)) {
             return true;
         }
     }
     return false;
 }
 
-
-function confirm_file_list() {
-    if (steps['model 3D'] == 'in progress') {
-        let selectedRadio = document.querySelector('input[name="file"]:checked');
-        let selectedFilename = selectedRadio.value;
-        // to_load_data['file_details']['filename'] = selectedFilename;
-        set_status_div_children('disable', 'file_list_btn-div', ['confirm_model-btn']);
-        document.getElementById('confirm_model-btn').textContent = 'Reset';
-        update_steps('model 3D', 'done');
-        update_steps('category', 'in progress');
-        set_status_div_children('enable', 'file_list_btn-div', ['confirm_model-btn']);
-        set_status_div_children('enable', 'category-container', [], 'selector-div');
-        document.getElementById('select_category-btn').disabled = false;
-        set_status_all('disable', 'file_list-ul');
-    } else {
-        set_status_div_children('disable', 'file_list_btn-div', ['confirm_model-btn']);
-        document.getElementById('confirm_model-btn').textContent = 'Reset';
-        document.getElementById('select_category-btn').disabled = true;
-        update_steps('model 3D', 'ready');
-        update_steps('category', 'ready');
-        set_status_all('enable', 'file_list-ul');
-    }
-}
-
-function load_category() {
-    let cat_select = document.getElementById('category-select');
-    let sub_select = document.getElementById('sub_category-select');
-    let cat_id = cat_select.value;
-    to_load_data['model_details']['category_id'] = categories_data['category'][cat_id];
-    if (sub_select.value != 'null') {
-        cat_id += '-' + sub_select.value;
-        to_load_data['model_details']['sub_category_id'] = categories_data['sub_category'][sub_select.value];
-    }
-    fetch('/mongodb/get_form/' + cat_id, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-        .then(response => response.json())
-        .then(data => {
-            handling_data['form_keys']['form_id'] = data['_id'];
-            let model_fields = data['model_details'];
-            let print_fields = data['print_details'];
-            generate_input_form('model_details-div', model_fields, 'model');
-            generate_input_form('print_details-div', print_fields, 'print');
-            set_status_all('enable', 'model_form-div');
-            // set_status_all('disable', 'form-container');
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-}
-
-function confirm_category() {
-    update_steps('category', 'done');
-    update_steps('form', 'in progress');
-    set_status_div_children('disable', 'category_btn-div', []);
-    // set_status_all('enable', 'form-div');
-}
-
 function confirm_form() {
     for (let key of ['model', 'print', 'file']) {
-        if (handling_data['form_keys'][key].length) {
-            for (let form_key of handling_data['form_keys'][key]) {
+        if (data.handling['form_keys'][key].length) {
+            for (let form_key of data.handling['form_keys'][key]) {
                 let form_elem = document.getElementById(form_key + '_form--input');
                 if (form_elem.tagName == 'SELECT') {
-                    to_load_data[key + '_details'][form_key] = form_elem.value;
+                    data.to_load[key + '_details'][form_key] = form_elem.value;
                 } else if (form_elem.tagName == 'INPUT') {
-                    to_load_data[key + '_details'][form_key] = form_elem.checked;
+                    data.to_load[key + '_details'][form_key] = form_elem.checked;
                 }
             }
         }
@@ -557,22 +664,22 @@ function add_item_to_db() {
         return;
     }
     if (confirm(
-        'Form_id: ' + handling_data['form_keys']['form_id'] + '\n' +
+        'Form_id: ' + data.handling['form_keys']['form_id'] + '\n' +
         'Detail_field: ' + detail_field + '\n' +
         'Key_field: ' + key_field + '\n' +
         'New_option: ' + new_option)) {
         console.log('a la verga pinche perro')
         let new_option_encoded = encodeUrlParam(new_option);
         console.log('new_option', new_option);
-        fetch('/mongodb/add_form_option/' + handling_data['form_keys']['form_id'] + '/' + detail_field + '/' + key_field + '/' + new_option_encoded, {
+        fetch('/mongodb/add_form_option/' + data.handling['form_keys']['form_id'] + '/' + detail_field + '/' + key_field + '/' + new_option_encoded, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
         })
             .then(response => response.json())
-            .then(data => {
-                console.log('data', data);
+            .then(response_data => {
+                console.log('data', response_data);
                 let select_field = document.getElementById(key_field + '_form--input');
                 let option = document.createElement('option');
                 option.value = new_option;
@@ -603,43 +710,9 @@ function set_status_all(set = 'disable', div = null) {
     document.getElementById('test-btn').disabled = false;
 }
 
-function reset_page_to_step(step) {
-    switch (step) {
-        case 'source':
-            reset_to_source();
-            update_status_info();
-            break;
-    }
-}
-
 function update_steps(key, value) {
     steps[key] = value;
     update_status_info();
-}
-
-function reset_to_source() {
-    to_load_data = {
-        'model_details': {},
-        'print_details': {},
-        'file_details': {}
-    };
-    handling_data = {
-        'extension': false,
-        'print': false,
-        'file': false,
-        'file_count': 0,
-    }
-    steps = {
-        'init': 'done',
-        'source': 'ready',
-        'file': 'ready',
-        'file list': 'ready',
-        'model 3D': 'ready',
-        'category': 'ready',
-        'form': 'ready',
-    }
-    set_status_all();
-    set_status_div_children('enable', 'source-div', ['load-btn', 'skip-btn', 'fix-btn']);
 }
 
 function update_status_info() {
@@ -663,161 +736,6 @@ function init_status_info() {
         li.appendChild(p);
         status_ul.appendChild(li);
     }
-}
-
-function set_status_div_children(execution, div_id, except = [], div_class = null) {
-    let div = document.getElementById(div_id);
-    if (div_class) {
-        let sub_divs = div.getElementsByClassName(div_class);
-        for (let sub_div of sub_divs) {
-            for (let child of sub_div.children) {
-                if (execution == 'enable') {
-                    if (!except.includes(child.id)) {
-                        child.disabled = false;
-                    } else {
-                        child.disabled = true;
-                    }
-                } else if (execution == 'disable') {
-                    if (!except.includes(child.id)) {
-                        child.disabled = true;
-                    } else {
-                        child.disabled = false;
-                    }
-                }
-            }
-        }
-    }
-    if (execution == 'enable') {
-        for (let child of div.children) {
-            if (!except.includes(child.id)) {
-                child.disabled = false;
-            } else {
-                child.disabled = true;
-            }
-        }
-    } else if (execution == 'disable') {
-        for (let child of div.children) {
-            if (!except.includes(child.id)) {
-                child.disabled = true;
-            } else {
-                child.disabled = false;
-            }
-        }
-    }
-}
-
-function generate_input_form(div_id, fields, form_type) {
-    let div = document.getElementById(div_id);
-    for (let child of div.children) {
-        if (child.tagName != 'UL') {
-            div.removeChild(child);
-        }
-    }
-    let ul = div.querySelector('ul');
-    let button_div = document.createElement('div');
-    button_div.className = 'btn-form';
-    let key_list = Object.keys(fields);
-    let button_list = []
-    ul.innerHTML = '';
-    for (let key of key_list) {
-        if (key != 'notes' && key != 'problems') {
-            handling_data['form_keys'][form_type].push(key);
-        }
-        let field = fields[key];
-        let li = document.createElement('li');
-        li.className = 'form-group margin-bottom-5';
-        let label = document.createElement('label');
-        label.for = key;
-        label.textContent = (capitalize_first_letter(key) + ':').replace(/_/g, ' ');
-        let select_field = document.createElement('select');
-        select_field.id = key + '_form--input';
-        if ('options' in field) {
-            for (let option of field['options']) {
-                let option_elem = document.createElement('option');
-                option_elem.value = option;
-                option_elem.textContent = option;
-                select_field.appendChild(option_elem);
-            }
-            li.appendChild(label);
-            let mini_div = document.createElement('div');
-            mini_div.className = 'selector-div';
-            mini_div.id = key + '_-_' + div_id + '--db_field'
-            let button_add = document.createElement('button');
-            button_add.type = 'button';
-            button_add.textContent = 'Add';
-            button_add.className = 'btn btn-primary xmini-btn';
-            button_add.addEventListener('click', add_item_to_db)
-            mini_div.appendChild(select_field);
-            mini_div.appendChild(button_add);
-            li.appendChild(mini_div);
-            if (key == 'complexity' || key == 'quality') {
-                button_add.style.display = 'none';
-            }
-        } else if (field['type'] == 'boolean') {
-            let input_field = document.createElement('input');
-            input_field.type = 'checkbox';
-            input_field.name = key;
-            input_field.id = key + '_form--input';
-            li.appendChild(label);
-            li.appendChild(input_field);
-        } else if (field['type'] == 'button') {
-            let button = document.createElement('button');
-            button.type = 'button';
-            button.textContent = capitalize_first_letter(key);
-            button.id = key + '-btn';
-            button.className = 'btn btn-primary xmini-btn';
-            button.addEventListener('click', () => {
-                let func = window[field['function']];
-                if (typeof func === 'function') {
-                    func(); // Llamar a la función si es válida
-                } else {
-                    console.error(`${field['function']} no es una función o no está definida.`);
-                }
-            });
-            button_list.push(button);
-        }
-        if (field['type'] != 'button') {
-            ul.appendChild(li);
-        }
-        for (let button of button_list) {
-            button_div.appendChild(button);
-        }
-        div.appendChild(button_div);
-    }
-}
-
-function category_select() {
-    let category_id = document.getElementById('category-select').value;
-    let sub_select = document.getElementById('sub_category-select');
-    let sub_select_div = document.getElementById('sub_category-div');
-    let subs = []
-    for (let sub of sub_categories) {
-        if (sub['category_id'] == category_id) {
-            subs.push(sub);
-        }
-    }
-    if (subs.length == 0) {
-        sub_select.innerHTML = '';
-        let option = document.createElement('option');
-        option.value = null;
-        option.text = 'No subcategories';
-        sub_select.appendChild(option);
-        sub_select.disabled = true;
-    } else {
-        sub_select.disabled = false;
-        sub_select.innerHTML = '';
-        for (let sub of subs) {
-            let option = document.createElement('option');
-            option.value = sub['id'];
-            option.text = sub['name'];
-            sub_select.appendChild(option);
-        }
-        let option = document.createElement('option');
-        option.value = null;
-        option.text = 'No subcategory';
-        sub_select.appendChild(option);
-    }
-    load_category();
 }
 
 function upload_img() {
@@ -882,33 +800,6 @@ function set_sub_category(sub_category) {
         });
 }
 
-function fix() {
-    // 66aa6e5a2ad0dc78c5ba2b91
-    let file_id = raw_file_data['_id'];
-    let reason = prompt("Please enter the reason for the fix");
-    reason = reason == null || reason == "" ? false : encodeUrlParam(reason);
-    if (!reason) {
-        alert('Fix cancelled');
-        return;
-    } else {
-        alert('Fix reason: ' + reason);
-        fetch('/mongodb/set_fix/' + file_id + '/' + reason, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('download_s3-btn').disabled = false;
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                document.getElementById('download_s3-btn').disabled = false;
-            });
-    }
-}
-
 window.print_add_problems = function () {
     let problem = prompt("Please enter the print problems");
     problem = problem == null || problem == "" ? false : encodeUrlParam(problem);
@@ -916,7 +807,7 @@ window.print_add_problems = function () {
         alert('print problem cancelled');
         return;
     } else {
-        to_load_data['print']['problems'] = problem;
+        data.to_load['print']['problems'] = problem;
     }
 }
 
@@ -927,7 +818,7 @@ window.print_add_notes = function () {
         alert('print notes cancelled');
         return;
     } else {
-        to_load_data['print']['notes'] = notes;
+        data.to_load['print']['notes'] = notes;
     }
 }
 
@@ -938,7 +829,7 @@ window.model_add_problems = function () {
         alert('Model problem cancelled');
         return;
     } else {
-        to_load_data['model']['problems'] = problem;
+        data.to_load['model']['problems'] = problem;
     }
 }
 
@@ -949,6 +840,7 @@ window.model_add_notes = function () {
         alert('model notes cancelled');
         return;
     } else {
-        to_load_data['model']['notes'] = notes;
+        data.to_load['model']['notes'] = notes;
     }
 }
+

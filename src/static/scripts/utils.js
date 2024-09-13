@@ -5,7 +5,7 @@ export function encodeUrlParam(param) {
 }
 
 // Variables globales
-let scene, camera, camera2, renderer, renderer2, controls, loader;
+let scene, camera, camera2, renderer, renderer2, controls, loader, mesh;
 const container = document.getElementById('principal_viewer');
 const container2 = document.getElementById('second_viewer');
 const FIXED_WIDTH = 1200;
@@ -121,7 +121,7 @@ export function load_model_visor(url) {
 
         loader.load(url, function (geometry) {
             geometry.center();
-            const mesh = createMesh(geometry);
+            mesh = createMesh(geometry);
             let measures = get_model_measures(mesh);
             measures['volume_ml'] = calculate_model_volume_ml(mesh);
             measures['has_base'] = hasBase(geometry);
@@ -142,6 +142,22 @@ export function load_model_visor(url) {
 
         animate();
     });
+}
+
+export function rotateY45Degrees() {
+    // Convertir 45 grados a radianes
+    const radians = THREE.MathUtils.degToRad(45);
+    
+    // Rotar el objeto en el eje Y
+    mesh.rotation.y += radians;
+}
+
+export function rotateX45Degrees() {
+    // Convertir 45 grados a radianes
+    const radians = THREE.MathUtils.degToRad(45);
+    
+    // Rotar el objeto en el eje X
+    mesh.rotation.x += radians;
 }
 
 function removeExistingModels() {

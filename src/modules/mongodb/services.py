@@ -36,6 +36,7 @@ class MongoDBService(MongoDBConfig):
         try:
             collection = self.__client[f'{db_name}_{os.getenv('ENV')}'][collection_name]
             full_field = f"{detail_field}.{field}.options"
+            print(document_id, 'wesa')
             response = await collection.update_one({'_id': ObjectId(document_id)}, {'$push': {full_field: option}})
             response = response.raw_result
             return True

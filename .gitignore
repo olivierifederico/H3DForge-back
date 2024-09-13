@@ -11,3 +11,4 @@ src/__pycache__/
 src/modules/data_providers/__pycache__/
 src/static/temp/files/ready/
 src/static/temp/files/compressed/
+src/modules/file_handler/__pycache__/

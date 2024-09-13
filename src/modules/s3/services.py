@@ -3,6 +3,10 @@ from botocore.exceptions import ClientError, NoCredentialsError
 import os
 import time
 
+from ..file_handler.services import FileHandlerService
+
+file_handler = FileHandlerService()
+
 class S3Service(S3Config):
     def __init__(self):
         super().__init__()

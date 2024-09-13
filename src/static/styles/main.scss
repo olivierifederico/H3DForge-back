@@ -282,7 +282,7 @@ html {
 
     .file_list_folder {
         display: grid;
-        grid-template-columns: 0.1fr;
+        grid-template-columns: 1fr;
         grid-template-rows: 1fr auto;
         margin-bottom: 15px;
         div {
